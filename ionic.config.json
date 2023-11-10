@@ -1,0 +1,7 @@
+{
+  "name": "watter-locate",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
