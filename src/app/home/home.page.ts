@@ -1,7 +1,14 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { GoogleMap } from '@capacitor/google-maps';
+import {
+  Component,
+  ElementRef,
+  OnInit,
+  ViewChild,
+  inject,
+} from '@angular/core';
+import { GoogleMap, Marker } from '@capacitor/google-maps';
 import { Geolocation } from '@capacitor/geolocation';
 import { environment } from 'src/environments/environment';
+import { PlacesWatterService } from './services/places-watter.service';
 
 @Component({
   selector: 'app-home',
@@ -15,12 +22,15 @@ export class HomePage implements OnInit {
   latitud = 0;
   longitud = 0;
 
+  private readonly placesSvr = inject(PlacesWatterService);
+
   ngOnInit(): void {
     this.getLocation();
   }
 
   async getLocation() {
     const location = await Geolocation.getCurrentPosition();
+    console.log(location);
     this.latitud = location.coords.latitude;
     this.longitud = location.coords.longitude;
 
@@ -41,8 +51,23 @@ export class HomePage implements OnInit {
           lat: lat,
           lng: lng,
         },
-        zoom: 8,
+        zoom: 14,
       },
     });
+
+    const marker: Marker = {
+      coordinate: {
+        lat: lat,
+        lng: lng,
+      },
+      title: 'Mi Ubicación',
+      iconUrl: 'assets/location-sharp.svg',
+      iconSize: { width: 30, height: 30 },
+    };
+    this.newMap.addMarker(marker);
+
+    this.placesSvr
+      .getFountaingWatter(lat, lng)
+      .subscribe((res) => console.log(res));
   }
 }
