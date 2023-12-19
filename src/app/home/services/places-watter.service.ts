@@ -11,7 +11,7 @@ export class PlacesWatterService {
 
   public getFountaingWatter(): Observable<Cordenadas[]> {
     return this.http
-      .get<FountainData[]>('http://127.0.0.1:8000/fuentes_de_beber/')
+      .get<FountainData[]>('https://planfit-be.onrender.com/fuentes_de_beber/')
       .pipe(
         map((data: FountainData[]) => {
           return data.map((item: FountainData) => ({
