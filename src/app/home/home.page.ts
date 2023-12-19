@@ -57,7 +57,7 @@ export class HomePage implements OnInit {
           lat: latitud,
           lng: longitud,
         },
-        zoom: 12,
+        zoom: 14,
       },
     });
     this.getUserLocationAndMark(cordenadas);
@@ -95,7 +95,6 @@ export class HomePage implements OnInit {
 
   private presentLocationDetail(): void {
     this.map.setOnMarkerClickListener(async (marker) => {
-      console.log(marker);
       const info = await this.modalCtrl.create({
         component: InfoLocationComponent,
         componentProps: { marker },

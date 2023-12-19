@@ -1,5 +1,6 @@
 <ion-header>
   <ion-toolbar>
+    <ion-icon name="water-outline"></ion-icon>
     <ion-title>{{ marker.title }}</ion-title>
   </ion-toolbar>
   <ion-content>
@@ -7,5 +8,7 @@
     <p>{{ marker?.latitude }} / {{ marker.longitude }}</p>
   </ion-content>
 
-  <ion-button (click)="goGoogleMaps()">Como llegar</ion-button>
+  <ion-button shape="round" (click)="goGoogleMaps()"
+    >Obtener dirección</ion-button
+  >
 </ion-header>

@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { Browser } from '@capacitor/browser';
 
 @Component({
   selector: 'app-info-location',
@@ -8,8 +9,8 @@ import { Component, Input } from '@angular/core';
 export class InfoLocationComponent {
   @Input() marker!: any;
 
-  public goGoogleMaps(): void {
+  public async goGoogleMaps(): Promise<void> {
     const mapsUrl = `https://www.google.com/maps?q=${this.marker.latitude},${this.marker.longitude}`;
-    window.open(mapsUrl, '_blank');
+    await Browser.open({ url: mapsUrl });
   }
 }
