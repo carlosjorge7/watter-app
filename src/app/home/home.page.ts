@@ -99,8 +99,8 @@ export class HomePage implements OnInit {
       const info = await this.modalCtrl.create({
         component: InfoLocationComponent,
         componentProps: { marker },
-        breakpoints: [0, 0.3],
-        initialBreakpoint: 0.3,
+        breakpoints: [0, 0.5],
+        initialBreakpoint: 0.5,
       });
       info.present();
     });
