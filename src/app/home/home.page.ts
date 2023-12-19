@@ -12,6 +12,7 @@ import { PlacesWatterService } from './services/places-watter.service';
 import { ModalController } from '@ionic/angular';
 import { InfoLocationComponent } from './info-location/info-location.component';
 import { Cordenadas } from './models/models';
+import { first } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -78,19 +79,22 @@ export class HomePage implements OnInit {
   }
 
   private callApiWatterLocationsAndMark() {
-    this.placesSvr.getFountaingWatter().subscribe((cordenadas) => {
-      cordenadas.forEach((item) => {
-        this.watterLocations.push({
-          coordinate: {
-            lat: item.latitud,
-            lng: item.longitud,
-          },
-          title: 'Watter station',
+    this.placesSvr
+      .getFountaingWatter()
+      .pipe(first())
+      .subscribe((data) => {
+        data.forEach((item) => {
+          this.watterLocations.push({
+            coordinate: {
+              lat: item.LATITUD,
+              lng: item.LONGITUD,
+            },
+            title: `Estado: ${item.ESTADO}, Zona: ${item.DISTRITO}, Barrio: ${item.BARRIO}`,
+          });
         });
+        this.map.addMarkers(this.watterLocations);
+        this.loading = false;
       });
-      this.map.addMarkers(this.watterLocations);
-      this.loading = false;
-    });
   }
 
   private presentLocationDetail(): void {
