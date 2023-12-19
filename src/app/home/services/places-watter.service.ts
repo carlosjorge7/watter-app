@@ -1,24 +1,24 @@
-import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { environment } from 'src/environments/environment';
+import { Injectable } from '@angular/core';
+import { Observable, map } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { Cordenadas, FountainData } from '../models/models';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PlacesWatterService {
-  private readonly http = inject(HttpClient);
+  constructor(private readonly http: HttpClient) {}
 
-  public getFountaingWatter(lat: number, lon: number): Observable<any> {
-    const placesEndpoint =
-      'https://maps.googleapis.com/maps/api/place/nearbysearch/json';
-    const params = {
-      location: `${lat},${lon}`,
-      radius: 5000, // Radio de búsqueda en metros (ajústalo según tus necesidades)
-      type: 'water',
-      keyword: 'potable water',
-      key: environment.MAP_KEY,
-    };
-    return this.http.get(placesEndpoint, { params });
+  public getFountaingWatter(): Observable<Cordenadas[]> {
+    return this.http
+      .get<FountainData[]>('http://127.0.0.1:8000/fuentes_de_beber/')
+      .pipe(
+        map((data: FountainData[]) => {
+          return data.map((item: FountainData) => ({
+            latitud: item.LATITUD,
+            longitud: item.LONGITUD,
+          }));
+        })
+      );
   }
 }

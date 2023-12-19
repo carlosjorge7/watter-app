@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { HomePage } from './home.page';
 import { HomePageRoutingModule } from './home-routing.module';
 import { HttpClientModule } from '@angular/common/http';
+import { InfoLocationComponent } from './info-location/info-location.component';
 
 @NgModule({
   imports: [
@@ -14,7 +15,7 @@ import { HttpClientModule } from '@angular/common/http';
     HomePageRoutingModule,
     HttpClientModule,
   ],
-  declarations: [HomePage],
+  declarations: [HomePage, InfoLocationComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class HomePageModule {}

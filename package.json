@@ -7,7 +7,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "buildMobile": "ng cache clean && ionic cap sync android && ionic cap sync ios",
+    "buildMobile": "ng cache clean && ionic cap sync android",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint"

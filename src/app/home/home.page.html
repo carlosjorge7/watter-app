@@ -1,7 +1,27 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title> Watterapp </ion-title>
+  <ion-toolbar color="primary">
+    <ion-title> Sitios interés en Madrid </ion-title>
   </ion-toolbar>
+
+  <ion-list>
+    <ion-item>
+      <ion-select
+        aria-label="Categories"
+        interface="popover"
+        placeholder="Elige una categoria"
+        [(ngModel)]="selectedCategory"
+      >
+        <ion-select-option
+          *ngFor="let category of categories"
+          [value]="category"
+        >
+          {{ category }}
+        </ion-select-option>
+      </ion-select>
+    </ion-item>
+  </ion-list>
+
+  <ion-progress-bar *ngIf="loading" type="indeterminate"></ion-progress-bar>
 </ion-header>
 
 <ion-content [fullscreen]="true">

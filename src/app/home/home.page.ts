@@ -9,6 +9,9 @@ import { GoogleMap, Marker } from '@capacitor/google-maps';
 import { Geolocation } from '@capacitor/geolocation';
 import { environment } from 'src/environments/environment';
 import { PlacesWatterService } from './services/places-watter.service';
+import { ModalController } from '@ionic/angular';
+import { InfoLocationComponent } from './info-location/info-location.component';
+import { Cordenadas } from './models/models';
 
 @Component({
   selector: 'app-home',
@@ -17,57 +20,89 @@ import { PlacesWatterService } from './services/places-watter.service';
 })
 export class HomePage implements OnInit {
   @ViewChild('map') mapRef!: ElementRef<HTMLElement>;
-  newMap!: GoogleMap;
+  map!: GoogleMap;
 
-  latitud = 0;
-  longitud = 0;
+  myLocation: Marker = {} as Marker;
+  watterLocations: Marker[] = [];
+  loading = true;
+
+  selectedCategory = 'Fuentes de agua';
+  categories: string[] = ['Fuentes de agua', 'Aparcamientos gratis'];
 
   private readonly placesSvr = inject(PlacesWatterService);
+  private readonly modalCtrl = inject(ModalController);
 
   ngOnInit(): void {
-    this.getLocation();
+    this.getUserLocation();
   }
 
-  async getLocation() {
+  private async getUserLocation(): Promise<void> {
     const location = await Geolocation.getCurrentPosition();
-    console.log(location);
-    this.latitud = location.coords.latitude;
-    this.longitud = location.coords.longitude;
-
-    console.log(this.latitud, this.longitud);
-
-    // Luego de obtener la ubicación, crea el mapa
-    this.createMap(this.latitud, this.longitud);
+    const userCordenadas = {
+      latitud: location.coords.latitude,
+      longitud: location.coords.longitude,
+    } as Cordenadas;
+    this.createMap(userCordenadas);
   }
 
-  async createMap(lat: number, lng: number) {
-    this.newMap = await GoogleMap.create({
+  private async createMap(cordenadas: Cordenadas): Promise<void> {
+    const { latitud, longitud } = cordenadas;
+    this.map = await GoogleMap.create({
       id: 'my-cool-map',
       element: this.mapRef.nativeElement,
       apiKey: environment.MAP_KEY,
       forceCreate: true,
       config: {
         center: {
-          lat: lat,
-          lng: lng,
+          lat: latitud,
+          lng: longitud,
         },
-        zoom: 14,
+        zoom: 12,
       },
     });
+    this.getUserLocationAndMark(cordenadas);
+    this.callApiWatterLocationsAndMark();
+    this.presentLocationDetail();
+  }
 
-    const marker: Marker = {
+  private getUserLocationAndMark(cordenadas: Cordenadas): void {
+    this.myLocation = {
       coordinate: {
-        lat: lat,
-        lng: lng,
+        lat: cordenadas.latitud,
+        lng: cordenadas.longitud,
       },
       title: 'Mi Ubicación',
-      iconUrl: 'assets/location-sharp.svg',
-      iconSize: { width: 30, height: 30 },
+      opacity: 0.5,
     };
-    this.newMap.addMarker(marker);
+    this.map.addMarker(this.myLocation);
+  }
 
-    this.placesSvr
-      .getFountaingWatter(lat, lng)
-      .subscribe((res) => console.log(res));
+  private callApiWatterLocationsAndMark() {
+    this.placesSvr.getFountaingWatter().subscribe((cordenadas) => {
+      cordenadas.forEach((item) => {
+        this.watterLocations.push({
+          coordinate: {
+            lat: item.latitud,
+            lng: item.longitud,
+          },
+          title: 'Watter station',
+        });
+      });
+      this.map.addMarkers(this.watterLocations);
+      this.loading = false;
+    });
+  }
+
+  private presentLocationDetail(): void {
+    this.map.setOnMarkerClickListener(async (marker) => {
+      console.log(marker);
+      const info = await this.modalCtrl.create({
+        component: InfoLocationComponent,
+        componentProps: { marker },
+        breakpoints: [0, 0.3],
+        initialBreakpoint: 0.3,
+      });
+      info.present();
+    });
   }
 }
