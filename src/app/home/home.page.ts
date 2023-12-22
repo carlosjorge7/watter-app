@@ -27,9 +27,6 @@ export class HomePage implements OnInit {
   watterLocations: Marker[] = [];
   loading = true;
 
-  selectedCategory = 'Fuentes de agua';
-  categories: string[] = ['Fuentes de agua', 'Aparcamientos gratis'];
-
   private readonly placesSvr = inject(PlacesWatterService);
   private readonly modalCtrl = inject(ModalController);
 

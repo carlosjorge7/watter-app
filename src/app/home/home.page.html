@@ -1,28 +1,10 @@
 <ion-header [translucent]="true">
   <ion-toolbar color="primary">
     <ion-title>
-      <ion-icon name="location-outline"></ion-icon>
-      <span>Sitios de útiles en Madrid</span>
+      <ion-icon name="water"></ion-icon>
+      <span>FindWater</span>
     </ion-title>
   </ion-toolbar>
-
-  <ion-list>
-    <ion-item>
-      <ion-select
-        aria-label="Categories"
-        interface="popover"
-        placeholder="Elige una categoria"
-        [(ngModel)]="selectedCategory"
-      >
-        <ion-select-option
-          *ngFor="let category of categories"
-          [value]="category"
-        >
-          {{ category }}
-        </ion-select-option>
-      </ion-select>
-    </ion-item>
-  </ion-list>
 
   <ion-progress-bar *ngIf="loading" type="indeterminate"></ion-progress-bar>
 </ion-header>
