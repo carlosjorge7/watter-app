@@ -27,7 +27,7 @@
     "@capacitor/browser": "^6.0.2",
     "@capacitor/core": "6.2.1",
     "@capacitor/geolocation": "^6.0.1",
-    "@capacitor/google-maps": "^7.0.3",
+    "@capacitor/google-maps": "^5.4.1",
     "@capacitor/haptics": "6.0.1",
     "@capacitor/ios": "6.2.1",
     "@capacitor/keyboard": "6.0.2",
