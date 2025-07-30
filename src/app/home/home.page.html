@@ -6,7 +6,20 @@
     </ion-title>
   </ion-toolbar>
 
-  <ion-progress-bar *ngIf="loading" type="indeterminate"></ion-progress-bar>
+  <ion-progress-bar
+    *ngIf="showProgressBar"
+    [value]="loadingProgress / 100"
+    type="determinate"
+  >
+  </ion-progress-bar>
+
+  <!-- Mostrar contador de fuentes cargadas -->
+  <div *ngIf="showProgressBar" class="loading-info">
+    <span
+      >Cargando fuentes... {{ watterLocations.length }} / {{
+      totalExpectedFountains }} ({{ loadingProgress.toFixed(0) }}%)</span
+    >
+  </div>
 </ion-header>
 
 <ion-content [fullscreen]="true">
