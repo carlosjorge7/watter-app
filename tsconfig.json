@@ -18,10 +18,8 @@
     "importHelpers": true,
     "target": "es2022",
     "module": "es2020",
-    "lib": [
-      "es2018", 
-      "dom"
-    ],
+    "lib": ["es2018", "dom"],
+    "types": ["google.maps"],
     "useDefineForClassFields": false
   },
   "angularCompilerOptions": {

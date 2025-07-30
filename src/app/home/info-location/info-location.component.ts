@@ -1,10 +1,19 @@
 import { Component, Input } from '@angular/core';
+import {
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonIcon,
+  IonContent,
+  IonButton,
+} from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
 
 @Component({
   selector: 'app-info-location',
   templateUrl: './info-location.component.html',
   styleUrls: ['./info-location.component.scss'],
+  imports: [IonHeader, IonToolbar, IonTitle, IonIcon, IonContent, IonButton],
 })
 export class InfoLocationComponent {
   @Input() marker!: any;
