@@ -162,23 +162,15 @@
   .coordinate-item {
     text-align: center;
 
-    ion-chip {
-      margin: 0 0 8px 0;
-      --background: var(--ion-color-light);
-      --color: var(--ion-color-dark);
-      font-weight: 500;
+    ion-icon {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
 
-      ion-icon {
-        font-size: 1rem;
-      }
-
-      ion-label {
-        font-weight: 700;
-
-        strong {
-          font-weight: 700;
-        }
-      }
+    ion-label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 4px;
     }
 
     small {
