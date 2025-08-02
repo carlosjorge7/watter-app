@@ -6,24 +6,36 @@
     </ion-title>
   </ion-toolbar>
 
-  <ion-progress-bar
-    *ngIf="showProgressBar"
-    [value]="loadingProgress / 100"
-    type="determinate"
-  >
+  @if (showProgressBar) {
+  <ion-progress-bar [value]="loadingProgress / 100" type="determinate">
   </ion-progress-bar>
 
   <!-- Mostrar contador de fuentes cargadas -->
-  <div *ngIf="showProgressBar" class="loading-info">
+  <div class="loading-info">
     <span
       >Cargando fuentes... {{ watterLocations.length }} / {{
       totalExpectedFountains }} ({{ loadingProgress.toFixed(0) }}%)</span
     >
   </div>
+  }
 </ion-header>
 
 <ion-content [fullscreen]="true">
   <div class="container">
     <capacitor-google-map #map></capacitor-google-map>
+
+    @if (!loading && watterLocations.length > 0) {
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+      <ion-fab-button color="primary" (click)="openFountainsList()">
+        <ion-icon name="list"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+
+    <ion-fab vertical="bottom" horizontal="start" slot="fixed">
+      <ion-fab-button color="primary" (click)="centerOnMyLocation()">
+        <ion-icon name="locate"></ion-icon>
+      </ion-fab-button>
+    </ion-fab>
+    }
   </div>
 </ion-content>

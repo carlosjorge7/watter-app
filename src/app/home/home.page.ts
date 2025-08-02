@@ -14,7 +14,7 @@ import { PlacesWatterService } from './services/places-watter.service';
 import { ModalController } from '@ionic/angular/standalone';
 import { InfoLocationComponent } from './info-location/info-location.component';
 import { Cordenadas } from './models/models';
-import { first, Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import {
   IonHeader,
   IonToolbar,
@@ -22,8 +22,13 @@ import {
   IonIcon,
   IonProgressBar,
   IonContent,
+  IonFab,
+  IonFabButton,
 } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
+import { FountainsListComponent } from './fountains-list/fountains-list.component';
+import { addIcons } from 'ionicons';
+import { list, locate } from 'ionicons/icons';
 
 @Component({
   selector: 'app-home',
@@ -38,6 +43,8 @@ import { CommonModule } from '@angular/common';
     IonIcon,
     IonProgressBar,
     IonContent,
+    IonFab,
+    IonFabButton,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
@@ -52,6 +59,7 @@ export class HomePage implements OnInit, OnDestroy {
   loadingProgress = 0; // Para mostrar progreso de carga
   totalExpectedFountains = 2253; // Estimado total realista de fuentes (23 páginas * ~65 por página)
   showProgressBar = true; // Control separado para la barra de progreso
+  showInfoTooltip = false; // Controlar visibilidad del tooltip (inicialmente oculto)
 
   // Subject para manejar la desuscripción
   private destroy$ = new Subject<void>();
@@ -61,6 +69,10 @@ export class HomePage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.getUserLocation();
+  }
+
+  constructor() {
+    addIcons({ list, locate });
   }
 
   ngOnDestroy(): void {
@@ -109,7 +121,6 @@ export class HomePage implements OnInit, OnDestroy {
         lng: cordenadas.longitud,
       },
       title: 'Mi Ubicación',
-      opacity: 0.5,
       iconSize: {
         width: 60,
         height: 60,
@@ -136,6 +147,9 @@ export class HomePage implements OnInit, OnDestroy {
 
           // Solo ocultar el loading principal, mantener la barra de progreso
           this.loading = false;
+
+          // Mostrar tooltip por unos segundos cuando las fuentes estén cargadas
+          this.showTooltipTemporarily();
         },
         error: (error) => {
           console.error('❌ Error en carga inicial:', error);
@@ -181,6 +195,8 @@ export class HomePage implements OnInit, OnDestroy {
         barrio: item.BARRIO,
         latitud: item.LATITUD,
         longitud: item.LONGITUD,
+        // Guardamos también el objeto completo para acceso fácil
+        fullData: item,
       });
 
       const marker: Marker = {
@@ -253,17 +269,120 @@ export class HomePage implements OnInit, OnDestroy {
       const markerWithInfo = {
         ...marker,
         title: markerData
-          ? `Estado: ${markerData.estado}, Zona: ${markerData.distrito}, Barrio: ${markerData.barrio}`
+          ? `Estado: ${markerData.estado || 'No disponible'}, Zona: ${
+              markerData.distrito || 'No disponible'
+            }, Barrio: ${markerData.barrio || 'No disponible'}`
           : 'Información no disponible',
+        // Pasar toda la información disponible
+        markerData: markerData || null,
       };
 
       const info = await this.modalCtrl.create({
         component: InfoLocationComponent,
         componentProps: { marker: markerWithInfo },
-        breakpoints: [0, 0.5],
-        initialBreakpoint: 0.5,
+        breakpoints: [0, 1],
+        initialBreakpoint: 1,
       });
       info.present();
     });
+  }
+
+  /**
+   * Abre el modal de listado completo de fuentes con filtros
+   */
+  public async openFountainsList(): Promise<void> {
+    try {
+      console.log(`📋 Abriendo listado de fuentes...`);
+
+      // Usar directamente el servicio para obtener las fuentes cacheadas
+      const cachedFountains = this.placesSvr.getCachedFountains();
+
+      const modal = await this.modalCtrl.create({
+        component: FountainsListComponent,
+        componentProps: {
+          fountains: cachedFountains,
+        },
+        breakpoints: [0, 1],
+        initialBreakpoint: 1,
+        backdropDismiss: true,
+        showBackdrop: true,
+      });
+
+      await modal.present();
+
+      // Manejar el resultado del modal
+      const { data } = await modal.onDidDismiss();
+
+      if (data?.action === 'goToMap' && data?.fountain) {
+        // Centrar el mapa en la fuente seleccionada
+        await this.centerOnLocation(
+          data.fountain.LATITUD,
+          data.fountain.LONGITUD
+        );
+        console.log(`🎯 Centrando mapa en fuente: ${data.fountain.DISTRITO}`);
+      }
+    } catch (error) {
+      console.error('❌ Error abriendo listado de fuentes:', error);
+    }
+  }
+
+  /**
+   * Centra el mapa en la ubicación del usuario
+   */
+  public async centerOnMyLocation(): Promise<void> {
+    try {
+      console.log('📍 Centrando mapa en ubicación del usuario...');
+
+      // Obtener ubicación actual
+      const location = await Geolocation.getCurrentPosition();
+
+      // Centrar el mapa usando el método correcto
+      await this.map.setCamera({
+        coordinate: {
+          lat: location.coords.latitude,
+          lng: location.coords.longitude,
+        },
+        zoom: 16,
+        animate: true,
+      });
+
+      console.log('✅ Mapa centrado en ubicación del usuario');
+    } catch (error) {
+      console.error('❌ Error centrando en ubicación del usuario:', error);
+    }
+  }
+
+  /**
+   * Centra el mapa en una ubicación específica
+   */
+  private async centerOnLocation(lat: number, lng: number): Promise<void> {
+    try {
+      await this.map.setCamera({
+        coordinate: { lat, lng },
+        zoom: 18,
+        animate: true,
+      });
+    } catch (error) {
+      console.error('❌ Error centrando mapa en ubicación:', error);
+    }
+  }
+
+  /**
+   * Oculta el tooltip informativo
+   */
+  public hideTooltip(): void {
+    this.showInfoTooltip = false;
+  }
+
+  /**
+   * Muestra el tooltip temporalmente y lo oculta después de 5 segundos
+   */
+  private showTooltipTemporarily(): void {
+    this.showInfoTooltip = true;
+
+    // Ocultar automáticamente después de 5 segundos
+    setTimeout(() => {
+      this.showInfoTooltip = false;
+    }, 5000);
   }
 }

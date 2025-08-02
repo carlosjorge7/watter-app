@@ -1,18 +1,127 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>
-      <ion-icon color="primary" name="water"></ion-icon>
-      {{ marker.title.split(",")[0] }}
+<ion-header class="ion-no-border">
+  <ion-toolbar color="primary">
+    <ion-title class="header-title">
+      <div class="title-container">
+        <div class="water-icon">
+          <ion-icon name="water" size="large"></ion-icon>
+        </div>
+        <div class="title-text">
+          <h2>Fuente de Agua</h2>
+          <p>Información detallada</p>
+        </div>
+      </div>
     </ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="closeModal()">
+        <ion-icon name="close" size="large"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
-  <ion-content>
-    <ion-title>{{ marker.title.split(",")[1] }}</ion-title>
-    <ion-title>{{ marker.title.split(",")[2] }}</ion-title>
-    <ion-title>Latitud: {{ marker.latitude }}</ion-title>
-    <ion-title>Longitud: {{ marker.longitude }}</ion-title>
-  </ion-content>
-
-  <ion-button style="text-align: center" shape="round" (click)="goGoogleMaps()"
-    >Abrir en Google Maps <ion-icon name="logo-google"></ion-icon>
-  </ion-button>
 </ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Card principal con información -->
+  <ion-card class="info-card">
+    <ion-card-content>
+      <!-- Estado de la fuente -->
+      <div class="status-section">
+        <div class="status-badge" [class]="getStatusClass()">
+          <ion-icon [name]="getStatusIcon()" size="small"></ion-icon>
+          <span>{{ getStatusText() }}</span>
+        </div>
+      </div>
+
+      <!-- Información de ubicación -->
+      <div class="location-section">
+        <h3 class="section-title">
+          <ion-icon name="location" color="primary"></ion-icon>
+          Ubicación
+        </h3>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <ion-icon name="business" color="medium"></ion-icon>
+            <div class="info-content">
+              <label>Distrito</label>
+              <p>{{ getDistrict() }}</p>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <ion-icon name="home" color="medium"></ion-icon>
+            <div class="info-content">
+              <label>Barrio</label>
+              <p>{{ getNeighborhood() }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="coordinates-section">
+        <h3 class="section-title">
+          <ion-icon name="navigate" color="primary"></ion-icon>
+          Coordenadas
+        </h3>
+
+        <div class="coordinates-grid">
+          <div class="coordinate-item">
+            <ion-icon name="arrow-up" color="primary"></ion-icon>
+            <ion-label>{{ marker.latitude | number : "1.6-6" }}</ion-label>
+            <small>Latitud</small>
+          </div>
+
+          <div class="coordinate-item">
+            <ion-icon name="arrow-forward" color="primary"></ion-icon>
+            <ion-label>{{ marker.longitude | number : "1.6-6" }}</ion-label>
+
+            <small>Longitud</small>
+          </div>
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Botones de acción -->
+  <div class="action-buttons">
+    <ion-button
+      expand="block"
+      fill="solid"
+      shape="round"
+      color="primary"
+      size="large"
+      (click)="goGoogleMaps()"
+    >
+      <ion-icon name="map" slot="start"></ion-icon>
+      Ver en Google Maps
+    </ion-button>
+
+    <ion-button
+      expand="block"
+      fill="outline"
+      shape="round"
+      color="secondary"
+      size="large"
+      (click)="shareLocation()"
+    >
+      <ion-icon name="share" slot="start"></ion-icon>
+      Compartir ubicación
+    </ion-button>
+  </div>
+
+  <!-- Información adicional -->
+  <ion-card class="tips-card">
+    <ion-card-header>
+      <ion-card-title class="tips-title">
+        <ion-icon name="bulb" color="warning"></ion-icon>
+        Consejos
+      </ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ul class="tips-list">
+        <li>Lleva tu propia botella reutilizable</li>
+        <li>Verifica que el agua fluya correctamente</li>
+        <li>Reporta cualquier problema encontrado</li>
+      </ul>
+    </ion-card-content>
+  </ion-card>
+</ion-content>

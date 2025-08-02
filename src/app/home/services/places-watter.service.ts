@@ -140,6 +140,11 @@ export class PlacesWatterService {
     return this.http.get<FuentesDeAguaDTO>(`${this.baseUrl}?page=${page}`);
   }
 
+  // Método para obtener las fuentes cacheadas inmediatamente
+  public getCachedFountains(): any[] {
+    return this.fountainsSubject.value || [];
+  }
+
   // Método para reiniciar el cache
   public resetCache(): void {
     this.cancelCurrentOperations(); // Cancelar operaciones primero

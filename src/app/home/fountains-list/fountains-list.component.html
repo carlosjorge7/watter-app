@@ -1,0 +1,138 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>
+      <div class="header-content">
+        <div>
+          <h2>Listado de fuentes</h2>
+          <p>
+            {{ allFilteredResults.length }}
+            @if (hasActiveFilters()) { de {{ fountains.length }} } fuentes @if
+            (hasActiveFilters()) { encontradas } @if (filteredFountains.length <
+            allFilteredResults.length) { (mostrando
+            {{ filteredFountains.length }}) }
+          </p>
+        </div>
+      </div>
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="closeModal()">
+        <ion-icon name="close" size="large"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content
+  class="ion-padding"
+  [scrollEvents]="true"
+  (ionScroll)="onScroll($event)"
+>
+  @if (initialLoad) {
+  <div class="loading-state">
+    <ion-spinner color="primary"></ion-spinner>
+    <p>Procesando fuentes...</p>
+  </div>
+  } @if (!initialLoad) {
+  <div>
+    <div class="filters-section">
+      <div class="filter-row">
+        <ion-item class="district-select">
+          <ion-select
+            [(ngModel)]="selectedDistrict"
+            (ionChange)="filterFountains(true)"
+            placeholder="Selecciona distrito para filtrar"
+            interface="popover"
+          >
+            <ion-select-option value="">Filtrar por distrito</ion-select-option>
+            @for (district of districts; track district) {
+            <ion-select-option [value]="district">{{
+              district
+            }}</ion-select-option>
+            }
+          </ion-select>
+        </ion-item>
+
+        @if (hasActiveFilters()) {
+        <ion-button
+          fill="clear"
+          size="small"
+          color="medium"
+          (click)="clearFilters()"
+          class="clear-filters-btn"
+        >
+          <ion-icon name="close" slot="start"></ion-icon>
+          Limpiar
+        </ion-button>
+        }
+      </div>
+    </div>
+
+    <div class="fountains-grid">
+      @for (fountain of filteredFountains; track fountain.ID) {
+      <ion-card class="fountain-card" (click)="openFountainDetail(fountain)">
+        <ion-card-content>
+          <div class="fountain-header">
+            <div class="fountain-title">
+              <h3>{{ fountain.DISTRITO }} - {{ fountain.BARRIO }}</h3>
+              <p class="neighborhood">{{ fountain.ESTADO }}</p>
+            </div>
+          </div>
+
+          <div class="coordinates">
+            <ion-button fill="solid" size="small" color="primary" shape="round">
+              <ion-icon name="location" color="light"></ion-icon>
+              <ion-label>
+                Ver Detalle
+                {{ fountain.LATITUD | number : "1.4-4" }},
+                {{ fountain.LONGITUD | number : "1.4-4" }}
+              </ion-label>
+            </ion-button>
+          </div>
+
+          <div class="fountain-actions">
+            <ion-button
+              fill="solid"
+              size="small"
+              color="primary"
+              shape="round"
+              (click)="goToMap(fountain, $event)"
+            >
+              <ion-icon name="map" slot="start"></ion-icon>
+              Ver en mapa
+            </ion-button>
+            <ion-button
+              fill="outline"
+              size="small"
+              color="primary"
+              shape="round"
+              (click)="shareLocation(fountain, $event)"
+            >
+              <ion-icon name="share" slot="start"></ion-icon>
+              Compartir
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+      } @empty {
+      <div class="empty-state">
+        <ion-icon name="search" size="large" color="medium"></ion-icon>
+        <h3>No se encontraron fuentes</h3>
+        <p>Intenta cambiar los filtros de búsqueda</p>
+      </div>
+      }
+
+      <div *ngIf="isLoading && !initialLoad" class="loading-more">
+        <ion-spinner color="primary"></ion-spinner>
+        <p>Cargando más fuentes...</p>
+      </div>
+
+      <div
+        *ngIf="!hasMoreItems && !isLoading && filteredFountains.length > 0"
+        class="no-more-items"
+      >
+        <p>No hay más fuentes que mostrar</p>
+      </div>
+    </div>
+  </div>
+  }
+</ion-content>
