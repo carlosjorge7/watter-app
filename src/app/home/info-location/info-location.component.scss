@@ -1,56 +1,48 @@
-// Header personalizado
-.header-title {
-  .title-container {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+// Header
+.header-title .title-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 
-    .water-icon {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      padding: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+  .water-icon {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    padding: 8px;
 
-      ion-icon {
-        color: white;
-      }
+    ion-icon {
+      color: white;
+    }
+  }
+
+  .title-text {
+    h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: white;
     }
 
-    .title-text {
-      text-align: left;
-
-      h2 {
-        margin: 0;
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: white;
-      }
-
-      p {
-        margin: 0;
-        font-size: 0.9rem;
-        opacity: 0.8;
-        color: white;
-      }
+    p {
+      margin: 0;
+      font-size: 0.9rem;
+      opacity: 0.8;
+      color: white;
     }
   }
 }
 
-// Card principal
+// Cards
 .info-card {
   margin: 0;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
 
   ion-card-content {
     padding: 20px;
   }
 }
 
-// Sección de estado
+// Estado
 .status-section {
   margin-bottom: 24px;
   text-align: center;
@@ -67,30 +59,26 @@
     &.status-working {
       background: rgba(40, 167, 69, 0.1);
       color: #28a745;
-      border: 1px solid rgba(40, 167, 69, 0.3);
     }
 
     &.status-broken {
       background: rgba(220, 53, 69, 0.1);
       color: #dc3545;
-      border: 1px solid rgba(220, 53, 69, 0.3);
     }
 
     &.status-maintenance {
       background: rgba(255, 193, 7, 0.1);
       color: #ffc107;
-      border: 1px solid rgba(255, 193, 7, 0.3);
     }
 
     &.status-unknown {
       background: rgba(108, 117, 125, 0.1);
       color: #6c757d;
-      border: 1px solid rgba(108, 117, 125, 0.3);
     }
   }
 }
 
-// Secciones de información
+// Secciones
 .location-section,
 .coordinates-section {
   margin-bottom: 24px;
@@ -103,10 +91,6 @@
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--ion-color-dark);
-
-    ion-icon {
-      font-size: 1.2rem;
-    }
   }
 }
 
@@ -117,35 +101,23 @@
 
   .info-item {
     display: flex;
-    align-items: flex-start;
     gap: 12px;
     padding: 16px;
     background: var(--ion-color-light);
     border-radius: 12px;
     border-left: 4px solid var(--ion-color-primary);
 
-    ion-icon {
-      font-size: 1.3rem;
-      margin-top: 2px;
-      flex-shrink: 0;
-    }
-
     .info-content {
-      flex: 1;
-
       label {
         display: block;
         font-size: 0.8rem;
-        font-weight: 500;
         color: var(--ion-color-medium);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
         margin-bottom: 4px;
       }
 
       p {
         margin: 0;
-        font-size: 1rem;
         font-weight: 500;
         color: var(--ion-color-dark);
       }
@@ -153,7 +125,7 @@
   }
 }
 
-// Grid de coordenadas
+// Coordenadas
 .coordinates-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -162,27 +134,20 @@
   .coordinate-item {
     text-align: center;
 
-    ion-icon {
-      font-size: 1.2rem;
-      margin-bottom: 8px;
-    }
-
     ion-label {
       display: block;
       font-weight: 700;
-      margin-bottom: 4px;
+      margin: 8px 0 4px;
     }
 
     small {
-      display: block;
       color: var(--ion-color-medium);
       font-size: 0.8rem;
-      font-weight: 500;
     }
   }
 }
 
-// Botones de acción
+// Botones
 .action-buttons {
   margin: 24px 0;
   display: flex;
@@ -190,22 +155,12 @@
   gap: 12px;
 
   ion-button {
-    text-transform: none;
-    font-weight: 500;
     --border-radius: 12px;
     height: 48px;
-
-    &[color="primary"] {
-      --box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.3);
-    }
-
-    ion-icon {
-      font-size: 1.2rem;
-    }
   }
 }
 
-// Card de consejos
+// Consejos
 .tips-card {
   margin: 16px 0 0 0;
   border-radius: 16px;
@@ -217,13 +172,8 @@
     align-items: center;
     gap: 8px;
     color: var(--ion-color-warning);
-    font-size: 1rem;
     font-weight: 600;
     margin: 0;
-
-    ion-icon {
-      font-size: 1.2rem;
-    }
   }
 
   .tips-list {
@@ -232,64 +182,14 @@
 
     li {
       margin-bottom: 8px;
-      color: var(--ion-color-dark);
       font-size: 0.9rem;
       line-height: 1.4;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
     }
-  }
-}
-
-// Animaciones
-.info-card,
-.tips-card {
-  animation: slideUp 0.3s ease-out;
-}
-
-.action-buttons ion-button {
-  animation: fadeIn 0.4s ease-out;
-  animation-fill-mode: both;
-
-  &:nth-child(1) {
-    animation-delay: 0.1s;
-  }
-
-  &:nth-child(2) {
-    animation-delay: 0.2s;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
   }
 }
 
 // Responsive
 @media (min-width: 768px) {
-  .coordinates-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .action-buttons {
     flex-direction: row;
 
