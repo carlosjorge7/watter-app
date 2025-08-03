@@ -67,32 +67,21 @@
       <capacitor-google-map #map></capacitor-google-map>
 
       @if (!loading && watterLocations.length > 0) {
-      <ion-fab vertical="bottom" horizontal="end">
-        <ion-fab-button color="primary" (click)="openFountainsList()">
-          <ion-icon name="list"></ion-icon>
+      <!-- FAB principal que abre el menú de acciones -->
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button color="primary" (click)="openActionsMenu()">
+          <ion-icon name="apps"></ion-icon>
         </ion-fab-button>
-        <ion-label class="fab-label">Listado</ion-label>
+        <ion-label class="fab-label">Acciones</ion-label>
       </ion-fab>
 
-      <ion-fab vertical="bottom" horizontal="start">
-        <ion-fab-button color="primary" (click)="centerOnMyLocation()">
-          <ion-icon name="locate"></ion-icon>
-        </ion-fab-button>
-        <ion-label class="fab-label">Mi ubicación</ion-label>
-      </ion-fab>
-
-      <ion-fab vertical="bottom" horizontal="center">
-        <ion-fab-button color="tertiary" (click)="openFavoritesList()">
-          <ion-icon name="heart"></ion-icon>
-          @if (favoritesCount$ | async; as count) { @if (count > 0) {
-          <ion-badge color="danger" class="favorites-badge"
-            >{{ count }}</ion-badge
-          >
-          } }
-        </ion-fab-button>
-        <ion-label class="fab-label">Favoritos</ion-label>
-      </ion-fab>
-      }
+      <!-- Indicador de favoritos como badge flotante -->
+      @if (favoritesCount$ | async; as count) { @if (count > 0) {
+      <div class="favorites-indicator">
+        <ion-badge color="danger">{{ count }}</ion-badge>
+        <span>Favoritos</span>
+      </div>
+      } } }
     </div>
   </ion-content>
 </div>

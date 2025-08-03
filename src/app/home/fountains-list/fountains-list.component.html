@@ -55,6 +55,23 @@
           </ion-select>
         </ion-item>
 
+        <ion-item class="usage-select">
+          <ion-select
+            [(ngModel)]="selectedUsage"
+            (ionChange)="filterFountains(true)"
+            placeholder="Filtrar por uso"
+            interface="popover"
+          >
+            <ion-select-option value="">Todos los usos</ion-select-option>
+            <ion-select-option value="personas"
+              >Solo personas</ion-select-option
+            >
+            <ion-select-option value="mascotas"
+              >Personas y mascotas</ion-select-option
+            >
+          </ion-select>
+        </ion-item>
+
         @if (hasActiveFilters()) {
         <ion-button
           fill="clear"
@@ -75,60 +92,91 @@
       @for (fountain of filteredFountains; track $index) {
       <ion-card class="fountain-card" (click)="openFountainDetail(fountain)">
         <ion-card-content>
+          <!-- Header con título y estado -->
           <div class="fountain-header">
             <div class="fountain-title">
               <h3>{{ fountain.DISTRITO }} - {{ fountain.BARRIO }}</h3>
-              <span class="neighborhood">{{ fountain.ESTADO }}</span>
+              <div class="status-badges">
+                <ion-chip
+                  [color]="getStatusColor(fountain.ESTADO!)"
+                  class="status-chip"
+                >
+                  <ion-icon
+                    [name]="getStatusIcon(fountain.ESTADO!)"
+                    slot="start"
+                  ></ion-icon>
+                  <ion-label>{{ getStatusText(fountain.ESTADO!) }}</ion-label>
+                </ion-chip>
+
+                <ion-chip [color]="getUsageColor(fountain)" class="usage-chip">
+                  <ion-icon
+                    [name]="getUsageIcon(fountain)"
+                    slot="start"
+                  ></ion-icon>
+                  <ion-label>{{ getUsage(fountain) }}</ion-label>
+                </ion-chip>
+              </div>
             </div>
           </div>
 
-          <div class="coordinates">
-            <ion-button fill="solid" size="small" color="primary" shape="round">
-              <ion-icon name="location" slot="start"></ion-icon>
-              <ion-label>
-                <strong>{{ fountain.LATITUD | number : "1.4-4" }}</strong
-                >,
-                <strong>{{ fountain.LONGITUD | number : "1.4-4" }}</strong>
-              </ion-label>
-            </ion-button>
+          <!-- Coordenadas mejoradas -->
+          <div class="coordinates-section">
+            <div class="coordinate-item">
+              <ion-icon name="location" color="primary"></ion-icon>
+              <div class="coordinate-data">
+                <span class="coordinate-label">Coordenadas</span>
+                <span class="coordinate-value">
+                  {{ fountain.LATITUD | number : "1.6-6" }},
+                  {{ fountain.LONGITUD | number : "1.6-6" }}
+                </span>
+              </div>
+            </div>
           </div>
 
+          <!-- Botones de acción mejorados -->
           <div class="fountain-actions">
-            <ion-button
-              fill="solid"
-              size="small"
-              color="primary"
-              shape="round"
-              (click)="goToMap(fountain, $event)"
-            >
-              <ion-icon name="map" slot="start"></ion-icon>
-              Ver en mapa
-            </ion-button>
-            <ion-button
-              fill="outline"
-              size="small"
-              color="primary"
-              shape="round"
-              (click)="shareLocation(fountain, $event)"
-            >
-              <ion-icon name="share" slot="start"></ion-icon>
-              Compartir
-            </ion-button>
-            <ion-button
-              [fill]="(isFavorite(fountain) | async) ? 'solid' : 'outline'"
-              size="small"
-              [color]="(isFavorite(fountain) | async) ? 'danger' : 'medium'"
-              shape="round"
-              (click)="toggleFavorite(fountain, $event)"
-            >
-              <ion-icon
-                [name]="
-                  (isFavorite(fountain) | async) ? 'heart' : 'heart-outline'
-                "
-                slot="start"
-              ></ion-icon>
-              {{ (isFavorite(fountain) | async) ? "Quitar" : "Favorito" }}
-            </ion-button>
+            <div class="primary-actions">
+              <ion-button
+                fill="solid"
+                size="default"
+                color="primary"
+                shape="round"
+                expand="block"
+                (click)="goToMap(fountain, $event)"
+              >
+                <ion-icon name="map" slot="start"></ion-icon>
+                Ver en mapa
+              </ion-button>
+            </div>
+
+            <div class="secondary-actions">
+              <ion-button
+                fill="outline"
+                size="default"
+                color="secondary"
+                shape="round"
+                (click)="shareLocation(fountain, $event)"
+              >
+                <ion-icon name="share" slot="start"></ion-icon>
+                Compartir
+              </ion-button>
+
+              <ion-button
+                [fill]="(isFavorite(fountain) | async) ? 'solid' : 'outline'"
+                size="default"
+                [color]="(isFavorite(fountain) | async) ? 'danger' : 'medium'"
+                shape="round"
+                (click)="toggleFavorite(fountain, $event)"
+              >
+                <ion-icon
+                  [name]="
+                    (isFavorite(fountain) | async) ? 'heart' : 'heart-outline'
+                  "
+                  slot="start"
+                ></ion-icon>
+                {{ (isFavorite(fountain) | async) ? "Quitar" : "Favorito" }}
+              </ion-button>
+            </div>
           </div>
         </ion-card-content>
       </ion-card>

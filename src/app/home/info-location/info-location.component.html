@@ -57,6 +57,22 @@
         </div>
       </div>
 
+      <!-- Información de uso -->
+      <div class="usage-section">
+        <h3 class="section-title">
+          <ion-icon name="people" color="primary"></ion-icon>
+          Uso permitido
+        </h3>
+
+        <div class="usage-item">
+          <ion-icon [name]="getUsageIcon()" color="secondary"></ion-icon>
+          <div class="usage-content">
+            <label>Tipo de uso</label>
+            <p>{{ getUsage() }}</p>
+          </div>
+        </div>
+      </div>
+
       <div class="coordinates-section">
         <h3 class="section-title">
           <ion-icon name="navigate" color="primary"></ion-icon>

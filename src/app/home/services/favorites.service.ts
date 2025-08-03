@@ -8,6 +8,7 @@ export interface Fountain {
   ESTADO?: string;
   LATITUD?: number;
   LONGITUD?: number;
+  USO?: string;
   id?: string; // Identificador único para cada fuente
 }
 

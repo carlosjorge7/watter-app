@@ -38,6 +38,8 @@ import {
   bulb,
   heart,
   heartOutline,
+  people,
+  paw,
 } from 'ionicons/icons';
 
 // Interfaces
@@ -45,6 +47,7 @@ interface MarkerData {
   distrito?: string;
   barrio?: string;
   estado?: string | number;
+  uso?: string;
 }
 
 interface FountainMarker {
@@ -104,6 +107,8 @@ export class InfoLocationComponent implements OnInit, OnDestroy {
       bulb,
       heart,
       'heart-outline': heartOutline,
+      people,
+      paw,
     });
   }
 
@@ -258,6 +263,49 @@ export class InfoLocationComponent implements OnInit, OnDestroy {
       return parts[2].trim().replace('Barrio: ', '');
     }
     return 'Barrio no disponible';
+  }
+
+  public getUsage(): string {
+    // Primero intentar obtener desde markerData
+    if (this.marker.markerData && this.marker.markerData.uso) {
+      return this.normalizeUsage(this.marker.markerData.uso);
+    }
+
+    // Fallback: buscar en el título
+    const title = this.marker.title || '';
+    if (title.includes('Uso:')) {
+      const usagePart = title.split('Uso:')[1]?.split(',')[0]?.trim();
+      if (usagePart) {
+        return this.normalizeUsage(usagePart);
+      }
+    }
+
+    return 'Uso no especificado';
+  }
+
+  private normalizeUsage(usage: string): string {
+    const normalizedUsage = usage.toUpperCase().trim();
+
+    if (
+      normalizedUsage.includes('PERSONAS_Y_MASCOTAS') ||
+      normalizedUsage.includes('PERSONAS Y MASCOTAS')
+    ) {
+      return 'Personas y mascotas';
+    } else if (normalizedUsage.includes('PERSONAS')) {
+      return 'Solo personas';
+    }
+
+    return usage || 'Uso no especificado';
+  }
+
+  public getUsageIcon(): string {
+    const usage = this.getUsage();
+    if (usage === 'Personas y mascotas') {
+      return 'paw';
+    } else if (usage === 'Solo personas') {
+      return 'people';
+    }
+    return 'help-circle';
   }
 
   public getTips(): string[] {

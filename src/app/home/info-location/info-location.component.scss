@@ -80,6 +80,7 @@
 
 // Secciones
 .location-section,
+.usage-section,
 .coordinates-section {
   margin-bottom: 24px;
 
@@ -125,6 +126,32 @@
   }
 }
 
+// Uso
+.usage-item {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: var(--ion-color-light);
+  border-radius: 12px;
+  border-left: 4px solid var(--ion-color-secondary);
+
+  .usage-content {
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--ion-color-medium);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    p {
+      margin: 0;
+      font-weight: 500;
+      color: var(--ion-color-dark);
+    }
+  }
+}
+
 // Coordenadas
 .coordinates-grid {
   display: grid;
@@ -157,6 +184,7 @@
   ion-button {
     --border-radius: 12px;
     height: 48px;
+    text-transform: initial;
   }
 }
 
@@ -195,6 +223,7 @@
 
     ion-button {
       flex: 1;
+      text-transform: initial;
     }
   }
 }

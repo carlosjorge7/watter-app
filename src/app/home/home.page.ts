@@ -12,7 +12,10 @@ import { Geolocation } from '@capacitor/geolocation';
 import { environment } from 'src/environments/environment';
 import { PlacesWatterService } from './services/places-watter.service';
 import { FavoritesService } from './services/favorites.service';
-import { ModalController } from '@ionic/angular/standalone';
+import {
+  ModalController,
+  ActionSheetController,
+} from '@ionic/angular/standalone';
 import { InfoLocationComponent } from './info-location/info-location.component';
 import { Cordenadas, FuenteDTO, FuentesDeAguaDTO } from './models/models';
 import { Subject, takeUntil, Observable, firstValueFrom } from 'rxjs';
@@ -24,6 +27,7 @@ interface MarkerData {
   barrio: string;
   latitud: number;
   longitud: number;
+  uso: string;
   fullData: FuenteDTO;
 }
 
@@ -62,6 +66,8 @@ import {
   informationCircle,
   bug,
   share,
+  apps,
+  close,
 } from 'ionicons/icons';
 
 @Component({
@@ -96,7 +102,7 @@ export class HomePage implements OnInit, OnDestroy {
   watterData: Map<string, MarkerData> = new Map(); // Para almacenar la información de cada marcador
   loading = true;
   loadingProgress = 0; // Para mostrar progreso de carga
-  totalExpectedFountains = 2253; // Estimado total realista de fuentes (23 páginas * ~65 por página)
+  totalExpectedFountains = 2558; // Estimado total realista de fuentes (23 páginas * ~65 por página)
   showProgressBar = true; // Control separado para la barra de progreso
   showInfoTooltip = false; // Controlar visibilidad del tooltip (inicialmente oculto)
 
@@ -107,6 +113,7 @@ export class HomePage implements OnInit, OnDestroy {
 
   private readonly placesSvr = inject(PlacesWatterService);
   private readonly modalCtrl = inject(ModalController);
+  private readonly actionSheetCtrl = inject(ActionSheetController);
   private readonly favoritesService = inject(FavoritesService);
 
   ngOnInit(): void {
@@ -129,6 +136,8 @@ export class HomePage implements OnInit, OnDestroy {
       'information-circle': informationCircle,
       bug,
       share,
+      apps,
+      close,
     });
   }
 
@@ -236,9 +245,37 @@ export class HomePage implements OnInit, OnDestroy {
         barrio: item.BARRIO,
         latitud: item.LATITUD,
         longitud: item.LONGITUD,
+        uso: item.USO,
         // Guardamos también el objeto completo para acceso fácil
         fullData: item,
       });
+
+      // Determinar el icono según el uso
+      const isForPetsAndPeople =
+        item.USO &&
+        (item.USO.toUpperCase().includes('PERSONAS_Y_MASCOTAS') ||
+          item.USO.toUpperCase().includes('PERSONAS Y MASCOTAS'));
+
+      const iconSvg = isForPetsAndPeople
+        ? // Huella de perro para personas y mascotas
+          `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+             <g fill="#333333">
+               <!-- Almohadilla principal -->
+               <ellipse cx="16" cy="20" rx="6" ry="4"/>
+               <!-- Dedos superiores -->
+               <ellipse cx="10" cy="12" rx="2.5" ry="3"/>
+               <ellipse cx="16" cy="10" rx="2.5" ry="3"/>
+               <ellipse cx="22" cy="12" rx="2.5" ry="3"/>
+               <!-- Dedo lateral mejorado -->
+               <ellipse cx="24.5" cy="17" rx="1.8" ry="2.8" fill="#2D2D2D" transform="rotate(20 24.5 17)"/>
+               <ellipse cx="24.7" cy="16.8" rx="1.2" ry="2.1" fill="#1A1A1A" transform="rotate(20 24.7 16.8)"/>
+             </g>
+           </svg>`
+        : // Gota de agua para solo personas
+          `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+             <path fill="#2196F3" d="M16 2c-4.418 0-8 7.164-8 12 0 4.418 3.582 8 8 8s8-3.582 8-8c0-4.836-3.582-12-8-12z"/>
+             <path fill="#1976D2" d="M16 2c-2 0-4 3-6 6 0 0 2-2 6-2s6 2 6 2c-2-3-4-6-6-6z"/>
+           </svg>`;
 
       const marker: Marker = {
         coordinate: {
@@ -247,15 +284,8 @@ export class HomePage implements OnInit, OnDestroy {
         },
         // Título vacío para que no se muestre en el mapa
         title: '',
-        // Icono personalizado de gota de agua
-        iconUrl:
-          'data:image/svg+xml;base64,' +
-          btoa(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-              <path fill="#2196F3" d="M16 2c-4.418 0-8 7.164-8 12 0 4.418 3.582 8 8 8s8-3.582 8-8c0-4.836-3.582-12-8-12z"/>
-              <path fill="#1976D2" d="M16 2c-2 0-4 3-6 6 0 0 2-2 6-2s6 2 6 2c-2-3-4-6-6-6z"/>
-            </svg>
-          `),
+        // Icono personalizado según el uso
+        iconUrl: 'data:image/svg+xml;base64,' + btoa(iconSvg),
         iconSize: {
           width: 38,
           height: 38,
@@ -446,6 +476,52 @@ export class HomePage implements OnInit, OnDestroy {
 
   public hideTooltip(): void {
     this.showInfoTooltip = false;
+  }
+
+  public async openActionsMenu(): Promise<void> {
+    const favoritesCount = await firstValueFrom(this.favoritesCount$);
+
+    const actionSheet = await this.actionSheetCtrl.create({
+      header: 'Acciones disponibles',
+      cssClass: 'custom-action-sheet',
+      buttons: [
+        {
+          text: `Ver listado completo`,
+          icon: 'list',
+          handler: () => {
+            this.openFountainsList();
+          },
+        },
+        {
+          text: `Favoritos ${favoritesCount > 0 ? `(${favoritesCount})` : ''}`,
+          icon: 'heart',
+          handler: () => {
+            this.openFavoritesList();
+          },
+        },
+        {
+          text: 'Centrar en mi ubicación',
+          icon: 'locate',
+          handler: () => {
+            this.centerOnMyLocation();
+          },
+        },
+        {
+          text: 'Estadísticas',
+          icon: 'analytics',
+          handler: () => {
+            this.showCacheInfo();
+          },
+        },
+        {
+          text: 'Cancelar',
+          icon: 'close',
+          role: 'cancel',
+        },
+      ],
+    });
+
+    await actionSheet.present();
   }
 
   private showTooltipTemporarily(): void {

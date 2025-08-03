@@ -14,6 +14,7 @@ import {
   IonSelectOption,
   IonLabel,
   IonSpinner,
+  IonChip,
   ModalController,
 } from '@ionic/angular/standalone';
 import { CommonModule, DecimalPipe, AsyncPipe } from '@angular/common';
@@ -37,6 +38,8 @@ import {
   list,
   heart,
   heartOutline,
+  people,
+  paw,
 } from 'ionicons/icons';
 
 @Component({
@@ -62,6 +65,7 @@ import {
     IonSelectOption,
     IonLabel,
     IonSpinner,
+    IonChip,
   ],
 })
 export class FountainsListComponent implements OnInit, OnDestroy {
@@ -72,6 +76,7 @@ export class FountainsListComponent implements OnInit, OnDestroy {
   districts: string[] = [];
   searchTerm: string = '';
   selectedDistrict: string = '';
+  selectedUsage: string = ''; // Nuevo filtro de uso
 
   // Estados de carga y paginación
   isLoading = false;
@@ -104,6 +109,8 @@ export class FountainsListComponent implements OnInit, OnDestroy {
       list,
       heart,
       'heart-outline': heartOutline,
+      people,
+      paw,
     });
   }
 
@@ -137,11 +144,24 @@ export class FountainsListComponent implements OnInit, OnDestroy {
   }
 
   private processDataInChunks(): void {
-    // Extraer distritos únicos de forma optimizada
+    // Optimización: procesar distritos directamente sin chunks para datasets pequeños/medianos
     const uniqueDistricts = new Set<string>();
 
-    // Procesar en chunks para no bloquear el UI
-    const chunkSize = 100;
+    // Para menos de 5000 fuentes, procesar directamente
+    if (this.fountains.length < 5000) {
+      this.fountains.forEach((fountain) => {
+        if (fountain.DISTRITO) {
+          uniqueDistricts.add(fountain.DISTRITO);
+        }
+      });
+
+      this.districts = Array.from(uniqueDistricts).sort();
+      this.setupInitialView();
+      return;
+    }
+
+    // Para datasets muy grandes, mantener procesamiento por chunks
+    const chunkSize = 500; // Aumentar tamaño del chunk
     let currentIndex = 0;
 
     const processChunk = () => {
@@ -160,8 +180,8 @@ export class FountainsListComponent implements OnInit, OnDestroy {
       currentIndex = endIndex;
 
       if (currentIndex < this.fountains.length) {
-        // Continuar procesando el siguiente chunk
-        setTimeout(processChunk, 0);
+        // Usar requestAnimationFrame en lugar de setTimeout para mejor performance
+        requestAnimationFrame(processChunk);
       } else {
         // Finalizar procesamiento
         this.districts = Array.from(uniqueDistricts).sort();
@@ -195,28 +215,38 @@ export class FountainsListComponent implements OnInit, OnDestroy {
     if (this.isLoading) return;
 
     if (immediate) {
-      // Aplicar filtros inmediatamente (para selects)
+      // Para filtros de select (distrito), aplicar inmediatamente sin delay
       this.applyFilters();
     } else {
-      // Aplicar filtro con pequeño delay para better UX (para búsqueda por texto)
+      // Para búsqueda por texto, mantener delay pequeño
       this.filterTimeout = setTimeout(() => {
         this.applyFilters();
-      }, 300);
+      }, 150); // Reducido de 300ms a 150ms
     }
   }
 
   private applyFilters(): void {
     this.isLoading = true;
 
-    // Usar requestIdleCallback para filtros pesados
+    // Para filtros simples como distrito y uso, ejecutar síncronamente
+    if (
+      (this.selectedDistrict || this.selectedUsage) &&
+      !this.searchTerm.trim()
+    ) {
+      this.performFilter();
+      return;
+    }
+
+    // Solo usar async para filtros complejos
     if ('requestIdleCallback' in window) {
       (window as any).requestIdleCallback(() => {
         this.performFilter();
       });
     } else {
-      setTimeout(() => {
+      // Usar requestAnimationFrame en lugar de setTimeout
+      requestAnimationFrame(() => {
         this.performFilter();
-      }, 0);
+      });
     }
   }
 
@@ -248,6 +278,21 @@ export class FountainsListComponent implements OnInit, OnDestroy {
       filtered = filtered.filter(
         (fountain) => fountain.DISTRITO === this.selectedDistrict
       );
+    }
+
+    // Filtrar por uso seleccionado
+    if (this.selectedUsage) {
+      filtered = filtered.filter((fountain) => {
+        const usage = this.getUsage(fountain);
+
+        if (this.selectedUsage === 'personas') {
+          return usage === 'Solo personas';
+        } else if (this.selectedUsage === 'mascotas') {
+          return usage === 'Personas y mascotas';
+        }
+
+        return true; // No debería llegar aquí con el filtro actual
+      });
     }
 
     // Guardar todos los resultados filtrados
@@ -301,11 +346,40 @@ export class FountainsListComponent implements OnInit, OnDestroy {
   public clearFilters(): void {
     this.searchTerm = '';
     this.selectedDistrict = '';
+    this.selectedUsage = '';
+
+    // Resetear estado de paginación
+    this.currentPage = 1;
+    this.hasMoreItems = true;
+
+    // Aplicar filtros para mostrar todos los elementos
     this.filterFountains(true);
+
+    // Simular evento de scroll para reestablecer la lista completa
+    setTimeout(() => {
+      this.triggerScrollReset();
+    }, 100);
+  }
+  private triggerScrollReset(): void {
+    // Reestablecer la vista inicial completa
+    this.allFilteredResults = [...this.fountains];
+    this.filteredFountains = this.fountains.slice(0, this.itemsPerPage);
+    this.hasMoreItems = this.fountains.length > this.itemsPerPage;
+
+    // Simular que se ha hecho scroll para cargar más elementos si es necesario
+    if (this.hasMoreItems) {
+      this.loadMoreItems();
+    }
+
+    console.log('🔄 Filtros limpiados y lista restablecida');
   }
 
   public hasActiveFilters(): boolean {
-    return this.searchTerm.trim() !== '' || this.selectedDistrict !== '';
+    return (
+      this.searchTerm.trim() !== '' ||
+      this.selectedDistrict !== '' ||
+      this.selectedUsage !== ''
+    );
   }
 
   public async closeModal(): Promise<void> {
@@ -406,6 +480,20 @@ export class FountainsListComponent implements OnInit, OnDestroy {
     }
   }
 
+  public getStatusColor(estado: string): string {
+    const status = this.getStatusText(estado);
+    switch (status) {
+      case 'Funcionando':
+        return 'success';
+      case 'Fuera de servicio':
+        return 'danger';
+      case 'En mantenimiento':
+        return 'warning';
+      default:
+        return 'medium';
+    }
+  }
+
   public isFavorite(fountain: Fountain): Observable<boolean> {
     return this.favoritesService.isFavorite(fountain);
   }
@@ -423,5 +511,42 @@ export class FountainsListComponent implements OnInit, OnDestroy {
   public removeFromFavorites(fountain: Fountain, event: Event): void {
     event.stopPropagation();
     this.favoritesService.removeFromFavorites(fountain);
+  }
+
+  public getUsage(fountain: Fountain): string {
+    if (!fountain.USO) return 'Uso no especificado';
+
+    const usage = fountain.USO.toUpperCase().trim();
+
+    if (
+      usage.includes('PERSONAS_Y_MASCOTAS') ||
+      usage.includes('PERSONAS Y MASCOTAS')
+    ) {
+      return 'Personas y mascotas';
+    } else if (usage.includes('PERSONAS')) {
+      return 'Solo personas';
+    }
+
+    return fountain.USO || 'Uso no especificado';
+  }
+
+  public getUsageIcon(fountain: Fountain): string {
+    const usage = this.getUsage(fountain);
+    if (usage === 'Personas y mascotas') {
+      return 'paw';
+    } else if (usage === 'Solo personas') {
+      return 'people';
+    }
+    return 'help-circle';
+  }
+
+  public getUsageColor(fountain: Fountain): string {
+    const usage = this.getUsage(fountain);
+    if (usage === 'Personas y mascotas') {
+      return 'secondary';
+    } else if (usage === 'Solo personas') {
+      return 'primary';
+    }
+    return 'medium';
   }
 }
