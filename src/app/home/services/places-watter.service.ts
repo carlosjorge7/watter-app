@@ -24,6 +24,10 @@ interface CacheData {
 export class PlacesWatterService {
   private readonly baseUrl =
     'https://ciudadesabiertas.madrid.es/dynamicAPI/API/query/mint_fuentes.json';
+
+  private readonly baseUrlFuentesMascotas =
+    'https://ciudadesabiertas.madrid.es/dynamicAPI/API/query/min_fuentes_can.json?pageSize=4500&page=1';
+
   private readonly totalPages = 23;
   private readonly CACHE_KEY = 'watter_app_fountains_cache';
   private readonly CACHE_VERSION = '1.0.0';
@@ -169,7 +173,11 @@ export class PlacesWatterService {
       this.getFountaingWatterByPage(page)
     );
 
-    return forkJoin(initialRequests).pipe(
+    // Agregar la petición de fuentes para mascotas
+    const petsRequest = this.getFountainsPets();
+    const allInitialRequests = [...initialRequests, petsRequest];
+
+    return forkJoin(allInitialRequests).pipe(
       map((responses: FuentesDeAguaDTO[]) => {
         const initialRecords = responses.reduce((acc, response) => {
           return [...acc, ...response.records];
@@ -220,10 +228,25 @@ export class PlacesWatterService {
       this.isLoading = false;
       this.allPagesLoaded = true;
 
-      const allFountains = this.fountainsSubject.value;
-      if (allFountains.length > 0) {
-        this.saveToCache(allFountains);
-      }
+      // Agregar fuentes de mascotas al final
+      this.getFountainsPets().subscribe({
+        next: (petsResponse) => {
+          const currentFountains = this.fountainsSubject.value;
+          const allFountains = [...currentFountains, ...petsResponse.records];
+          this.fountainsSubject.next(allFountains);
+
+          if (allFountains.length > 0) {
+            this.saveToCache(allFountains);
+          }
+        },
+        error: () => {
+          // Si falla la carga de mascotas, guardar solo las fuentes normales
+          const allFountains = this.fountainsSubject.value;
+          if (allFountains.length > 0) {
+            this.saveToCache(allFountains);
+          }
+        },
+      });
       return;
     }
 
@@ -258,6 +281,10 @@ export class PlacesWatterService {
 
   public getFountaingWatterByPage(page: number): Observable<FuentesDeAguaDTO> {
     return this.http.get<FuentesDeAguaDTO>(`${this.baseUrl}?page=${page}`);
+  }
+
+  public getFountainsPets(): Observable<FuentesDeAguaDTO> {
+    return this.http.get<FuentesDeAguaDTO>(this.baseUrlFuentesMascotas);
   }
 
   public getCachedFountains(): FuenteDTO[] {
