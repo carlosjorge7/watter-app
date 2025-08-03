@@ -9,6 +9,23 @@ capacitor-google-map {
   height: 100%;
 }
 
+ion-fab {
+  margin-bottom: 6px;
+}
+
+.favorites-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .loading-info {
   background: var(--ion-color-primary);
   color: white;

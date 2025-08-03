@@ -11,10 +11,27 @@ import { GoogleMap, Marker } from '@capacitor/google-maps';
 import { Geolocation } from '@capacitor/geolocation';
 import { environment } from 'src/environments/environment';
 import { PlacesWatterService } from './services/places-watter.service';
+import { FavoritesService } from './services/favorites.service';
 import { ModalController } from '@ionic/angular/standalone';
 import { InfoLocationComponent } from './info-location/info-location.component';
-import { Cordenadas } from './models/models';
-import { Subject, takeUntil } from 'rxjs';
+import { Cordenadas, FuenteDTO, FuentesDeAguaDTO } from './models/models';
+import { Subject, takeUntil, Observable, firstValueFrom } from 'rxjs';
+
+// Interface para los datos del marcador con propiedades normalizadas
+interface MarkerData {
+  estado: string;
+  distrito: string;
+  barrio: string;
+  latitud: number;
+  longitud: number;
+  fullData: FuenteDTO;
+}
+
+// Interface extendida para la respuesta con información de caché
+interface FuentesResponse extends FuentesDeAguaDTO {
+  isFromCache?: boolean;
+  isPartialLoad?: boolean;
+}
 import {
   IonHeader,
   IonToolbar,
@@ -24,17 +41,33 @@ import {
   IonContent,
   IonFab,
   IonFabButton,
+  IonLabel,
+  IonBadge,
+  IonMenu,
+  IonButtons,
+  IonMenuButton,
+  IonList,
+  IonItem,
 } from '@ionic/angular/standalone';
 import { CommonModule } from '@angular/common';
 import { FountainsListComponent } from './fountains-list/fountains-list.component';
 import { addIcons } from 'ionicons';
-import { list, locate } from 'ionicons/icons';
+import {
+  list,
+  locate,
+  water,
+  heart,
+  analytics,
+  settings,
+  informationCircle,
+  bug,
+  share,
+} from 'ionicons/icons';
 
 @Component({
   selector: 'app-home',
   templateUrl: 'home.page.html',
   styleUrls: ['home.page.scss'],
-  standalone: true,
   imports: [
     CommonModule,
     IonHeader,
@@ -45,46 +78,66 @@ import { list, locate } from 'ionicons/icons';
     IonContent,
     IonFab,
     IonFabButton,
+    IonLabel,
+    IonBadge,
+    IonMenu,
+    IonButtons,
+    IonMenuButton,
+    IonList,
+    IonItem,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class HomePage implements OnInit, OnDestroy {
   @ViewChild('map') mapRef!: ElementRef<HTMLElement>;
   map!: GoogleMap;
-
   myLocation: Marker = {} as Marker;
   watterLocations: Marker[] = [];
-  watterData: Map<string, any> = new Map(); // Para almacenar la información de cada marcador
+  watterData: Map<string, MarkerData> = new Map(); // Para almacenar la información de cada marcador
   loading = true;
   loadingProgress = 0; // Para mostrar progreso de carga
   totalExpectedFountains = 2253; // Estimado total realista de fuentes (23 páginas * ~65 por página)
   showProgressBar = true; // Control separado para la barra de progreso
   showInfoTooltip = false; // Controlar visibilidad del tooltip (inicialmente oculto)
 
-  // Subject para manejar la desuscripción
+  // Propiedades para favoritos
+  public favoritesCount$!: Observable<number>;
+
   private destroy$ = new Subject<void>();
 
   private readonly placesSvr = inject(PlacesWatterService);
   private readonly modalCtrl = inject(ModalController);
+  private readonly favoritesService = inject(FavoritesService);
 
   ngOnInit(): void {
+    this.favoritesCount$ = this.favoritesService.getFavoritesCount();
     this.getUserLocation();
+
+    if (!environment.production) {
+      (window as any).homePage = this;
+    }
   }
 
   constructor() {
-    addIcons({ list, locate });
+    addIcons({
+      list,
+      locate,
+      water,
+      heart,
+      analytics,
+      settings,
+      'information-circle': informationCircle,
+      bug,
+      share,
+    });
   }
 
   ngOnDestroy(): void {
-    // Completar el subject para desuscribir todos los observables
     this.destroy$.next();
     this.destroy$.complete();
-
-    // Cancelar operaciones en curso del servicio (opcional)
     this.placesSvr.cancelCurrentOperations();
-
-    console.log('🧹 Componente destruido y observables desuscritos');
   }
+
   private async getUserLocation(): Promise<void> {
     const location = await Geolocation.getCurrentPosition();
     const userCordenadas = {
@@ -130,29 +183,17 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private callApiWatterLocationsAndMark(): void {
-    // ESTRATEGIA 1: Carga progresiva
-    console.log('🚀 Iniciando carga progresiva de fuentes...');
-
-    // Cargar datos iniciales (primeras 3 páginas)
     this.placesSvr
       .getFountainsProgressive()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (data) => {
-          console.log(
-            `✅ Carga inicial: ${data.records.length} fuentes cargadas`
-          );
+        next: (data: FuentesResponse) => {
           this.addMarkersToMap(data.records);
           this.updateLoadingProgress(data.records.length);
-
-          // Solo ocultar el loading principal, mantener la barra de progreso
           this.loading = false;
-
-          // Mostrar tooltip por unos segundos cuando las fuentes estén cargadas
           this.showTooltipTemporarily();
         },
-        error: (error) => {
-          console.error('❌ Error en carga inicial:', error);
+        error: () => {
           this.loading = false;
           this.showProgressBar = false;
         },
@@ -177,7 +218,7 @@ export class HomePage implements OnInit, OnDestroy {
     });
   }
 
-  private addMarkersToMap(fountains: any[]): void {
+  private addMarkersToMap(fountains: FuenteDTO[]): void {
     const newMarkers: Marker[] = [];
 
     fountains.forEach((item) => {
@@ -287,9 +328,6 @@ export class HomePage implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Abre el modal de listado completo de fuentes con filtros
-   */
   public async openFountainsList(): Promise<void> {
     try {
       console.log(`📋 Abriendo listado de fuentes...`);
@@ -326,17 +364,56 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Centra el mapa en la ubicación del usuario
-   */
+  public async openFavoritesList(): Promise<void> {
+    try {
+      console.log('💖 Abriendo listado de fuentes favoritas...');
+
+      // Obtener las fuentes favoritas usando firstValueFrom (reemplazo moderno de toPromise)
+      const favorites = await firstValueFrom(
+        this.favoritesService.favorites$.pipe(takeUntil(this.destroy$))
+      );
+
+      console.log('📝 Favoritos encontrados:', favorites.length);
+
+      if (!favorites || favorites.length === 0) {
+        console.log('📝 No hay fuentes favoritas guardadas');
+        return;
+      }
+
+      const modal = await this.modalCtrl.create({
+        component: FountainsListComponent,
+        componentProps: {
+          fountains: favorites,
+          isFavoritesMode: true, // Indicar que es modo favoritos
+        },
+        breakpoints: [0, 1],
+        initialBreakpoint: 1,
+        backdropDismiss: true,
+        showBackdrop: true,
+      });
+
+      await modal.present();
+
+      const { data } = await modal.onWillDismiss();
+      if (data?.action === 'goToMap' && data.fountain) {
+        await this.centerOnLocation(
+          data.fountain.LATITUD,
+          data.fountain.LONGITUD
+        );
+        console.log(
+          `🎯 Centrando mapa en fuente favorita: ${data.fountain.DISTRITO}`
+        );
+      }
+    } catch (error) {
+      console.error('❌ Error abriendo listado de favoritos:', error);
+    }
+  }
+
   public async centerOnMyLocation(): Promise<void> {
     try {
       console.log('📍 Centrando mapa en ubicación del usuario...');
-
-      // Obtener ubicación actual
       const location = await Geolocation.getCurrentPosition();
 
-      // Centrar el mapa usando el método correcto
       await this.map.setCamera({
         coordinate: {
           lat: location.coords.latitude,
@@ -367,22 +444,147 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Oculta el tooltip informativo
-   */
   public hideTooltip(): void {
     this.showInfoTooltip = false;
   }
 
-  /**
-   * Muestra el tooltip temporalmente y lo oculta después de 5 segundos
-   */
   private showTooltipTemporarily(): void {
     this.showInfoTooltip = true;
 
-    // Ocultar automáticamente después de 5 segundos
     setTimeout(() => {
       this.showInfoTooltip = false;
     }, 5000);
+  }
+
+  // Métodos del menú
+  public openStatistics(): void {
+    this.showCacheInfo();
+  }
+
+  public openSettings(): void {
+    // TODO: Implementar modal de configuración
+  }
+
+  public openAbout(): void {
+    // TODO: Implementar modal de información
+  }
+
+  public reportIssue(): void {
+    // TODO: Implementar funcionalidad de reporte de problemas
+  }
+
+  public shareApp(): void {
+    // TODO: Implementar funcionalidad de compartir
+  }
+
+  // ========== MÉTODOS DE GESTIÓN DE CACHÉ ==========
+
+  /**
+   * Muestra información detallada del caché
+   */
+  public showCacheInfo(): void {
+    const cacheInfo = this.placesSvr.getCacheInfo();
+    const cacheAge = cacheInfo.cacheAge
+      ? this.formatCacheAge(cacheInfo.cacheAge)
+      : 'N/A';
+
+    console.log('💾 INFORMACIÓN DEL CACHÉ:', {
+      'Tiene caché válido': cacheInfo.hasCache ? '✅' : '❌',
+      'Datos actuales desde caché': cacheInfo.isFromCache ? '✅' : '❌',
+      'Todas las páginas cargadas': cacheInfo.allPagesLoaded ? '✅' : '❌',
+      'Total de fuentes': cacheInfo.totalFountains,
+      'Edad del caché': cacheAge,
+    });
+
+    // También mostrar en la consola para debug
+    console.table({
+      'Caché válido': cacheInfo.hasCache,
+      'Desde caché': cacheInfo.isFromCache,
+      'Páginas completas': cacheInfo.allPagesLoaded,
+      'Total fuentes': cacheInfo.totalFountains,
+      Edad: cacheAge,
+    });
+  }
+
+  /**
+   * Muestra opciones para gestionar el caché
+   */
+  public showCacheOptions(): void {
+    const cacheInfo = this.placesSvr.getCacheInfo();
+
+    console.log('⚙️ OPCIONES DE CACHÉ DISPONIBLES:');
+    console.log('1. clearAllCache() - Limpiar todo el caché');
+    console.log('2. forceRefreshFromAPI() - Forzar recarga desde API');
+    console.log('3. getCacheInfo() - Ver información del caché');
+    console.log('');
+    console.log('Estado actual:', {
+      'Fuentes en memoria': cacheInfo.totalFountains,
+      'Desde caché': cacheInfo.isFromCache ? 'Sí' : 'No',
+      'Caché válido': cacheInfo.hasCache ? 'Sí' : 'No',
+    });
+
+    // Ejemplos de uso:
+    console.log('');
+    console.log('Para usar desde la consola:');
+    console.log('- Limpiar caché: window.homePage.clearCache()');
+    console.log('- Recargar desde API: window.homePage.refreshFromAPI()');
+    console.log('- Ver info: window.homePage.showCacheInfo()');
+  }
+
+  /**
+   * Limpia todo el caché (memoria + localStorage)
+   */
+  public clearCache(): void {
+    console.log('🗑️ Limpiando todo el caché...');
+    this.placesSvr.clearAllCache();
+
+    // Recargar la página para aplicar cambios
+    setTimeout(() => {
+      console.log('🔄 Recargando datos...');
+      this.callApiWatterLocationsAndMark();
+    }, 500);
+  }
+
+  /**
+   * Fuerza la recarga desde la API ignorando el caché
+   */
+  public refreshFromAPI(): void {
+    console.log('🌐 Forzando recarga desde API...');
+    this.loading = true;
+    this.showProgressBar = true;
+
+    this.placesSvr
+      .forceRefreshFromAPI()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data: FuentesResponse) => {
+          console.log(
+            `✅ Recarga forzada completada: ${data.records.length} fuentes`
+          );
+          this.addMarkersToMap(data.records);
+          this.updateLoadingProgress(data.records.length);
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('❌ Error en recarga forzada:', error);
+          this.loading = false;
+          this.showProgressBar = false;
+        },
+      });
+  }
+
+  /**
+   * Formatea la edad del caché en un formato legible
+   */
+  private formatCacheAge(ageInMs: number): string {
+    const seconds = Math.floor(ageInMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days} día${days > 1 ? 's' : ''}`;
+    if (hours > 0) return `${hours} hora${hours > 1 ? 's' : ''}`;
+    if (minutes > 0) return `${minutes} minuto${minutes > 1 ? 's' : ''}`;
+    return `${seconds} segundo${seconds > 1 ? 's' : ''}`;
   }
 }

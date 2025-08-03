@@ -1,41 +1,98 @@
-<ion-header [translucent]="true">
-  <ion-toolbar color="primary">
-    <ion-title>
-      <ion-icon name="water"></ion-icon>
-      <span>AquaMad</span>
-    </ion-title>
-  </ion-toolbar>
+<ion-menu type="push" side="end" contentId="main-content">
+  <ion-header>
+    <ion-toolbar color="primary">
+      <ion-title>
+        <ion-icon name="water"></ion-icon>
+        <span>AquaMad Menu</span>
+      </ion-title>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content class="ion-padding">
+    <ion-list>
+      <ion-item button (click)="openStatistics()">
+        <ion-icon name="analytics" slot="start"></ion-icon>
+        <ion-label>Estadísticas</ion-label>
+      </ion-item>
 
-  @if (showProgressBar) {
-  <ion-progress-bar [value]="loadingProgress / 100" type="determinate">
-  </ion-progress-bar>
+      <ion-item button (click)="openSettings()">
+        <ion-icon name="settings" slot="start"></ion-icon>
+        <ion-label>Configuración</ion-label>
+      </ion-item>
 
-  <!-- Mostrar contador de fuentes cargadas -->
-  <div class="loading-info">
-    <span
-      >Cargando fuentes... {{ watterLocations.length }} / {{
-      totalExpectedFountains }} ({{ loadingProgress.toFixed(0) }}%)</span
-    >
-  </div>
-  }
-</ion-header>
+      <ion-item button (click)="openAbout()">
+        <ion-icon name="information-circle" slot="start"></ion-icon>
+        <ion-label>Acerca de</ion-label>
+      </ion-item>
 
-<ion-content [fullscreen]="true">
-  <div class="container">
-    <capacitor-google-map #map></capacitor-google-map>
+      <ion-item button (click)="reportIssue()">
+        <ion-icon name="bug" slot="start"></ion-icon>
+        <ion-label>Reportar problema</ion-label>
+      </ion-item>
 
-    @if (!loading && watterLocations.length > 0) {
-    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button color="primary" (click)="openFountainsList()">
-        <ion-icon name="list"></ion-icon>
-      </ion-fab-button>
-    </ion-fab>
+      <ion-item button (click)="shareApp()">
+        <ion-icon name="share" slot="start"></ion-icon>
+        <ion-label>Compartir app</ion-label>
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</ion-menu>
 
-    <ion-fab vertical="bottom" horizontal="start" slot="fixed">
-      <ion-fab-button color="primary" (click)="centerOnMyLocation()">
-        <ion-icon name="locate"></ion-icon>
-      </ion-fab-button>
-    </ion-fab>
+<div class="ion-page" id="main-content">
+  <ion-header [translucent]="true">
+    <ion-toolbar color="primary">
+      <ion-title>
+        <ion-icon name="water"></ion-icon>
+        <span>AquaMad</span>
+      </ion-title>
+      <ion-buttons slot="end">
+        <ion-menu-button></ion-menu-button>
+      </ion-buttons>
+    </ion-toolbar>
+
+    @if (showProgressBar) {
+    <ion-progress-bar [value]="loadingProgress / 100" type="determinate">
+    </ion-progress-bar>
+
+    <div class="loading-info">
+      <span
+        >Cargando fuentes... {{ watterLocations.length }} / {{
+        totalExpectedFountains }} ({{ loadingProgress.toFixed(0) }}%)</span
+      >
+    </div>
     }
-  </div>
-</ion-content>
+  </ion-header>
+
+  <ion-content [fullscreen]="true">
+    <div class="container">
+      <capacitor-google-map #map></capacitor-google-map>
+
+      @if (!loading && watterLocations.length > 0) {
+      <ion-fab vertical="bottom" horizontal="end">
+        <ion-fab-button color="primary" (click)="openFountainsList()">
+          <ion-icon name="list"></ion-icon>
+        </ion-fab-button>
+        <ion-label class="fab-label">Listado</ion-label>
+      </ion-fab>
+
+      <ion-fab vertical="bottom" horizontal="start">
+        <ion-fab-button color="primary" (click)="centerOnMyLocation()">
+          <ion-icon name="locate"></ion-icon>
+        </ion-fab-button>
+        <ion-label class="fab-label">Mi ubicación</ion-label>
+      </ion-fab>
+
+      <ion-fab vertical="bottom" horizontal="center">
+        <ion-fab-button color="tertiary" (click)="openFavoritesList()">
+          <ion-icon name="heart"></ion-icon>
+          @if (favoritesCount$ | async; as count) { @if (count > 0) {
+          <ion-badge color="danger" class="favorites-badge"
+            >{{ count }}</ion-badge
+          >
+          } }
+        </ion-fab-button>
+        <ion-label class="fab-label">Favoritos</ion-label>
+      </ion-fab>
+      }
+    </div>
+  </ion-content>
+</div>

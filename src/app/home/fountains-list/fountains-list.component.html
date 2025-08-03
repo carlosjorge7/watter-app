@@ -3,7 +3,9 @@
     <ion-title>
       <div class="header-content">
         <div>
-          <h2>Listado de fuentes</h2>
+          <h2>
+            {{ isFavoritesMode ? "Fuentes Favoritas" : "Listado de fuentes" }}
+          </h2>
           <p>
             {{ allFilteredResults.length }}
             @if (hasActiveFilters()) { de {{ fountains.length }} } fuentes @if
@@ -34,6 +36,7 @@
   </div>
   } @if (!initialLoad) {
   <div>
+    @if (!isFavoritesMode) {
     <div class="filters-section">
       <div class="filter-row">
         <ion-item class="district-select">
@@ -66,25 +69,26 @@
         }
       </div>
     </div>
+    }
 
     <div class="fountains-grid">
-      @for (fountain of filteredFountains; track fountain.ID) {
+      @for (fountain of filteredFountains; track $index) {
       <ion-card class="fountain-card" (click)="openFountainDetail(fountain)">
         <ion-card-content>
           <div class="fountain-header">
             <div class="fountain-title">
               <h3>{{ fountain.DISTRITO }} - {{ fountain.BARRIO }}</h3>
-              <p class="neighborhood">{{ fountain.ESTADO }}</p>
+              <span class="neighborhood">{{ fountain.ESTADO }}</span>
             </div>
           </div>
 
           <div class="coordinates">
             <ion-button fill="solid" size="small" color="primary" shape="round">
-              <ion-icon name="location" color="light"></ion-icon>
+              <ion-icon name="location" slot="start"></ion-icon>
               <ion-label>
-                Ver Detalle
-                {{ fountain.LATITUD | number : "1.4-4" }},
-                {{ fountain.LONGITUD | number : "1.4-4" }}
+                <strong>{{ fountain.LATITUD | number : "1.4-4" }}</strong
+                >,
+                <strong>{{ fountain.LONGITUD | number : "1.4-4" }}</strong>
               </ion-label>
             </ion-button>
           </div>
@@ -110,6 +114,21 @@
               <ion-icon name="share" slot="start"></ion-icon>
               Compartir
             </ion-button>
+            <ion-button
+              [fill]="(isFavorite(fountain) | async) ? 'solid' : 'outline'"
+              size="small"
+              [color]="(isFavorite(fountain) | async) ? 'danger' : 'medium'"
+              shape="round"
+              (click)="toggleFavorite(fountain, $event)"
+            >
+              <ion-icon
+                [name]="
+                  (isFavorite(fountain) | async) ? 'heart' : 'heart-outline'
+                "
+                slot="start"
+              ></ion-icon>
+              {{ (isFavorite(fountain) | async) ? "Quitar" : "Favorito" }}
+            </ion-button>
           </div>
         </ion-card-content>
       </ion-card>
@@ -119,19 +138,16 @@
         <h3>No se encontraron fuentes</h3>
         <p>Intenta cambiar los filtros de búsqueda</p>
       </div>
-      }
-
-      <div *ngIf="isLoading && !initialLoad" class="loading-more">
+      } @if (isLoading && !initialLoad) {
+      <div class="loading-more">
         <ion-spinner color="primary"></ion-spinner>
         <p>Cargando más fuentes...</p>
       </div>
-
-      <div
-        *ngIf="!hasMoreItems && !isLoading && filteredFountains.length > 0"
-        class="no-more-items"
-      >
+      } @if (!hasMoreItems && !isLoading && filteredFountains.length > 0) {
+      <div class="no-more-items">
         <p>No hay más fuentes que mostrar</p>
       </div>
+      }
     </div>
   </div>
   }

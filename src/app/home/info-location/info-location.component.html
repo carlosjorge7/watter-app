@@ -81,7 +81,6 @@
     </ion-card-content>
   </ion-card>
 
-  <!-- Botones de acción -->
   <div class="action-buttons">
     <ion-button
       expand="block"
@@ -97,6 +96,21 @@
 
     <ion-button
       expand="block"
+      [fill]="(isFavorite$ | async) ? 'solid' : 'outline'"
+      shape="round"
+      [color]="(isFavorite$ | async) ? 'danger' : 'medium'"
+      size="large"
+      (click)="toggleFavorite()"
+    >
+      <ion-icon
+        [name]="(isFavorite$ | async) ? 'heart' : 'heart-outline'"
+        slot="start"
+      ></ion-icon>
+      {{ (isFavorite$ | async) ? "Quitar de favoritos" : "Añadir a favoritos" }}
+    </ion-button>
+
+    <ion-button
+      expand="block"
       fill="outline"
       shape="round"
       color="secondary"
@@ -108,7 +122,6 @@
     </ion-button>
   </div>
 
-  <!-- Información adicional -->
   <ion-card class="tips-card">
     <ion-card-header>
       <ion-card-title class="tips-title">

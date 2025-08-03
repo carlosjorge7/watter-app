@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, inject, OnInit, OnDestroy } from '@angular/core';
 import {
   IonHeader,
   IonToolbar,
@@ -16,7 +16,9 @@ import {
   ModalController,
 } from '@ionic/angular/standalone';
 import { Browser } from '@capacitor/browser';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule, DecimalPipe, AsyncPipe } from '@angular/common';
+import { FavoritesService, Fountain } from '../services/favorites.service';
+import { Observable, Subject, takeUntil } from 'rxjs';
 import { addIcons } from 'ionicons';
 import {
   water,
@@ -34,16 +36,32 @@ import {
   map,
   share,
   bulb,
+  heart,
+  heartOutline,
 } from 'ionicons/icons';
+
+// Interfaces
+interface MarkerData {
+  distrito?: string;
+  barrio?: string;
+  estado?: string | number;
+}
+
+interface FountainMarker {
+  latitude: number;
+  longitude: number;
+  title?: string;
+  markerData?: MarkerData;
+}
 
 @Component({
   selector: 'app-info-location',
   templateUrl: './info-location.component.html',
   styleUrls: ['./info-location.component.scss'],
-  standalone: true,
   imports: [
     CommonModule,
     DecimalPipe,
+    AsyncPipe,
     IonHeader,
     IonToolbar,
     IonTitle,
@@ -58,10 +76,14 @@ import {
     IonLabel,
   ],
 })
-export class InfoLocationComponent {
-  @Input() marker!: any;
+export class InfoLocationComponent implements OnInit, OnDestroy {
+  @Input() marker!: FountainMarker;
+
+  public isFavorite$!: Observable<boolean>;
+  private destroy$ = new Subject<void>();
 
   private modalCtrl = inject(ModalController);
+  private favoritesService = inject(FavoritesService);
 
   constructor() {
     addIcons({
@@ -80,7 +102,27 @@ export class InfoLocationComponent {
       map,
       share,
       bulb,
+      heart,
+      'heart-outline': heartOutline,
     });
+  }
+
+  ngOnInit(): void {
+    // Crear un objeto Fountain a partir del marker
+    const fountain: Fountain = {
+      LATITUD: this.marker.latitude,
+      LONGITUD: this.marker.longitude,
+      DISTRITO: this.marker.markerData?.distrito,
+      BARRIO: this.marker.markerData?.barrio,
+      ESTADO: this.marker.markerData?.estado?.toString(),
+    };
+
+    this.isFavorite$ = this.favoritesService.isFavorite(fountain);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   public async goGoogleMaps(): Promise<void> {
@@ -94,7 +136,6 @@ export class InfoLocationComponent {
 
   public async shareLocation(): Promise<void> {
     try {
-      // Usar Web Share API si está disponible
       if (navigator.share) {
         await navigator.share({
           title: 'Fuente de agua encontrada',
@@ -102,7 +143,6 @@ export class InfoLocationComponent {
           url: `https://maps.google.com/maps?q=${this.marker.latitude},${this.marker.longitude}`,
         });
       } else {
-        // Fallback: copiar al portapapeles
         const text = `Fuente de agua en ${this.getDistrict()}, ${this.getNeighborhood()}: https://maps.google.com/maps?q=${
           this.marker.latitude
         },${this.marker.longitude}`;
@@ -226,5 +266,20 @@ export class InfoLocationComponent {
       'Verifica que el agua fluya correctamente',
       'Reporta cualquier problema encontrado',
     ];
+  }
+
+  /**
+   * Alterna el estado de favorito de la fuente
+   */
+  public toggleFavorite(): void {
+    const fountain: Fountain = {
+      LATITUD: this.marker.latitude,
+      LONGITUD: this.marker.longitude,
+      DISTRITO: this.marker.markerData?.distrito,
+      BARRIO: this.marker.markerData?.barrio,
+      ESTADO: this.marker.markerData?.estado?.toString(),
+    };
+
+    this.favoritesService.toggleFavorite(fountain);
   }
 }

@@ -9,21 +9,20 @@ import {
   IonButtons,
   IonCard,
   IonCardContent,
-  IonSearchbar,
   IonItem,
   IonSelect,
   IonSelectOption,
-  IonChip,
   IonLabel,
   IonSpinner,
   ModalController,
 } from '@ionic/angular/standalone';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe, AsyncPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Browser } from '@capacitor/browser';
 import { InfoLocationComponent } from '../info-location/info-location.component';
+import { FavoritesService, Fountain } from '../services/favorites.service';
+import { FuenteDTO } from '../models/models';
 import { addIcons } from 'ionicons';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, Observable } from 'rxjs';
 import {
   water,
   close,
@@ -36,15 +35,18 @@ import {
   construct,
   helpCircle,
   list,
+  heart,
+  heartOutline,
 } from 'ionicons/icons';
 
 @Component({
   selector: 'app-fountains-list',
   templateUrl: './fountains-list.component.html',
   styleUrls: ['./fountains-list.component.scss'],
-  standalone: true,
   imports: [
     CommonModule,
+    DecimalPipe,
+    AsyncPipe,
     FormsModule,
     IonHeader,
     IonToolbar,
@@ -63,9 +65,10 @@ import {
   ],
 })
 export class FountainsListComponent implements OnInit, OnDestroy {
-  @Input() fountains: any[] = [];
+  @Input() fountains: Fountain[] = [];
+  @Input() isFavoritesMode: boolean = false; // Para saber si es modo favoritos
 
-  filteredFountains: any[] = [];
+  filteredFountains: Fountain[] = [];
   districts: string[] = [];
   searchTerm: string = '';
   selectedDistrict: string = '';
@@ -78,12 +81,13 @@ export class FountainsListComponent implements OnInit, OnDestroy {
   hasMoreItems = true;
 
   // Guardar el resultado completo del filtro para paginación
-  public allFilteredResults: any[] = [];
+  public allFilteredResults: Fountain[] = [];
 
   // Para manejar debounce personalizado
   private filterTimeout: any;
   private destroy$ = new Subject<void>();
   private modalCtrl = inject(ModalController);
+  private favoritesService = inject(FavoritesService);
 
   constructor() {
     addIcons({
@@ -98,13 +102,14 @@ export class FountainsListComponent implements OnInit, OnDestroy {
       construct,
       'help-circle': helpCircle,
       list,
+      heart,
+      'heart-outline': heartOutline,
     });
   }
 
   ngOnInit() {
     this.setupDataOptimized();
   }
-
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
@@ -296,7 +301,7 @@ export class FountainsListComponent implements OnInit, OnDestroy {
   public clearFilters(): void {
     this.searchTerm = '';
     this.selectedDistrict = '';
-    this.filterFountains(true); // Filtro inmediato para limpiar
+    this.filterFountains(true);
   }
 
   public hasActiveFilters(): boolean {
@@ -330,7 +335,6 @@ export class FountainsListComponent implements OnInit, OnDestroy {
   public async goToMap(fountain: any, event: Event): Promise<void> {
     event.stopPropagation();
 
-    // Cerrar este modal y volver al mapa centrado en la fuente
     await this.modalCtrl.dismiss({
       action: 'goToMap',
       fountain: fountain,
@@ -400,5 +404,24 @@ export class FountainsListComponent implements OnInit, OnDestroy {
       default:
         return 'help-circle';
     }
+  }
+
+  public isFavorite(fountain: Fountain): Observable<boolean> {
+    return this.favoritesService.isFavorite(fountain);
+  }
+
+  public toggleFavorite(fountain: Fountain, event: Event): void {
+    event.stopPropagation();
+    this.favoritesService.toggleFavorite(fountain);
+  }
+
+  public addToFavorites(fountain: Fountain, event: Event): void {
+    event.stopPropagation();
+    this.favoritesService.addToFavorites(fountain);
+  }
+
+  public removeFromFavorites(fountain: Fountain, event: Event): void {
+    event.stopPropagation();
+    this.favoritesService.removeFromFavorites(fountain);
   }
 }

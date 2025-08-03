@@ -6,9 +6,17 @@ import {
   BehaviorSubject,
   Subject,
   takeUntil,
+  of,
 } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { FuentesDeAguaDTO } from '../models/models';
+import { FuentesDeAguaDTO, FuenteDTO } from '../models/models';
+
+interface CacheData {
+  fountains: FuenteDTO[];
+  timestamp: number;
+  totalRecords: number;
+  version: string;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -17,28 +25,145 @@ export class PlacesWatterService {
   private readonly baseUrl =
     'https://ciudadesabiertas.madrid.es/dynamicAPI/API/query/mint_fuentes.json';
   private readonly totalPages = 23;
+  private readonly CACHE_KEY = 'watter_app_fountains_cache';
+  private readonly CACHE_VERSION = '1.0.0';
+  private readonly CACHE_DURATION = 30 * 24 * 60 * 60 * 1000;
 
-  // Cache y estado para carga progresiva
-  private fountainsSubject = new BehaviorSubject<any[]>([]);
+  private fountainsSubject = new BehaviorSubject<FuenteDTO[]>([]);
   public fountains$ = this.fountainsSubject.asObservable();
   private loadedPages = new Set<number>();
   private isLoading = false;
-
-  // Subject para cancelar operaciones en curso (NO para OnDestroy)
+  private isDataFromCache = false;
+  private allPagesLoaded = false;
   private cancelOperations$ = new Subject<void>();
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {
+    this.loadFromCache();
+  }
 
-  // Método para cancelar todas las operaciones en curso
+  private loadFromCache(): void {
+    try {
+      const cachedDataStr = localStorage.getItem(this.CACHE_KEY);
+      if (!cachedDataStr) return;
+
+      const cachedData: CacheData = JSON.parse(cachedDataStr);
+
+      if (!this.isCacheValid(cachedData)) {
+        this.clearPersistentCache();
+        return;
+      }
+
+      this.fountainsSubject.next(cachedData.fountains);
+      this.isDataFromCache = true;
+      this.allPagesLoaded = true;
+
+      for (let i = 1; i <= this.totalPages; i++) {
+        this.loadedPages.add(i);
+      }
+    } catch (error) {
+      this.clearPersistentCache();
+    }
+  }
+
+  /**
+   * Verifica si el caché es válido (versión correcta y no expirado)
+   */
+  private isCacheValid(cachedData: CacheData): boolean {
+    if (!cachedData.version || cachedData.version !== this.CACHE_VERSION) {
+      return false;
+    }
+
+    const cacheAge = Date.now() - cachedData.timestamp;
+    return cacheAge < this.CACHE_DURATION;
+  }
+
+  private saveToCache(fountains: FuenteDTO[]): void {
+    try {
+      const cacheData: CacheData = {
+        fountains,
+        timestamp: Date.now(),
+        totalRecords: fountains.length,
+        version: this.CACHE_VERSION,
+      };
+
+      localStorage.setItem(this.CACHE_KEY, JSON.stringify(cacheData));
+    } catch (error) {
+      this.clearPersistentCache();
+    }
+  }
+
+  private clearPersistentCache(): void {
+    try {
+      localStorage.removeItem(this.CACHE_KEY);
+    } catch (error) {
+      // Silent fail
+    }
+  }
+
+  /**
+   * Obtiene información sobre el estado del caché
+   */
+  public getCacheInfo(): {
+    hasCache: boolean;
+    isFromCache: boolean;
+    cacheAge?: number;
+    totalFountains: number;
+    allPagesLoaded: boolean;
+  } {
+    const cachedDataStr = localStorage.getItem(this.CACHE_KEY);
+    const currentFountains = this.fountainsSubject.value;
+
+    let hasCache = false;
+    let cacheAge: number | undefined;
+
+    if (cachedDataStr) {
+      try {
+        const cachedData: CacheData = JSON.parse(cachedDataStr);
+        hasCache = this.isCacheValid(cachedData);
+        cacheAge = Date.now() - cachedData.timestamp;
+      } catch (error) {
+        hasCache = false;
+      }
+    }
+
+    return {
+      hasCache,
+      isFromCache: this.isDataFromCache,
+      cacheAge,
+      totalFountains: currentFountains.length,
+      allPagesLoaded: this.allPagesLoaded,
+    };
+  }
+
   public cancelCurrentOperations(): void {
     this.cancelOperations$.next();
     this.isLoading = false;
-    console.log('⏹️ Operaciones en curso canceladas');
   }
 
   // ESTRATEGIA 1: Carga inmediata + progresiva (RECOMENDADA para mapas)
   public getFountainsProgressive(): Observable<FuentesDeAguaDTO> {
-    // Primero carga las 3 primeras páginas rápidamente
+    if (this.isDataFromCache && this.allPagesLoaded) {
+      const cachedFountains = this.fountainsSubject.value;
+
+      return of({
+        page: 1,
+        pageSize: cachedFountains.length,
+        totalRecords: cachedFountains.length,
+        pageRecords: cachedFountains.length,
+        status: 200,
+        responseDate: new Date().toISOString(),
+        first: '',
+        last: '',
+        next: '',
+        self: '',
+        contentMD5: '',
+        sinEntrecomillar: true,
+        records: cachedFountains,
+        isPartialLoad: false,
+        isFromCache: true,
+      } as FuentesDeAguaDTO & { isFromCache: boolean; isPartialLoad: boolean });
+    }
+
     const initialPages = [1, 2, 3];
     const initialRequests = initialPages.map((page) =>
       this.getFountaingWatterByPage(page)
@@ -46,26 +171,24 @@ export class PlacesWatterService {
 
     return forkJoin(initialRequests).pipe(
       map((responses: FuentesDeAguaDTO[]) => {
-        // Combinar las primeras páginas
         const initialRecords = responses.reduce((acc, response) => {
           return [...acc, ...response.records];
-        }, [] as any[]);
+        }, [] as FuenteDTO[]);
 
-        // Marcar páginas como cargadas
         initialPages.forEach((page) => this.loadedPages.add(page));
-
-        // Actualizar el subject con los datos iniciales
         this.fountainsSubject.next(initialRecords);
-
-        // Cargar el resto en segundo plano
         this.loadRemainingPagesInBackground();
 
         return {
           ...responses[0],
           records: initialRecords,
           totalRecords: initialRecords.length,
-          isPartialLoad: true, // Indicar que hay más datos cargándose
-        } as FuentesDeAguaDTO;
+          isPartialLoad: true,
+          isFromCache: false,
+        } as FuentesDeAguaDTO & {
+          isFromCache: boolean;
+          isPartialLoad: boolean;
+        };
       })
     );
   }
@@ -82,7 +205,6 @@ export class PlacesWatterService {
       }
     }
 
-    // Cargar de 2 en 2 para no sobrecargar
     const batchSize = 2;
     const batches = [];
 
@@ -90,13 +212,18 @@ export class PlacesWatterService {
       batches.push(remainingPages.slice(i, i + batchSize));
     }
 
-    // Procesar lotes secuencialmente
     this.processBatches(batches, 0);
   }
 
   private processBatches(batches: number[][], batchIndex: number): void {
     if (batchIndex >= batches.length) {
       this.isLoading = false;
+      this.allPagesLoaded = true;
+
+      const allFountains = this.fountainsSubject.value;
+      if (allFountains.length > 0) {
+        this.saveToCache(allFountains);
+      }
       return;
     }
 
@@ -109,25 +236,19 @@ export class PlacesWatterService {
       .pipe(takeUntil(this.cancelOperations$))
       .subscribe({
         next: (responses: FuentesDeAguaDTO[]) => {
-          // Agregar nuevos records a los existentes
           const currentFountains = this.fountainsSubject.value;
           const newRecords = responses.reduce((acc, response) => {
             return [...acc, ...response.records];
-          }, [] as any[]);
+          }, [] as FuenteDTO[]);
 
           this.fountainsSubject.next([...currentFountains, ...newRecords]);
-
-          // Marcar páginas como cargadas
           currentBatch.forEach((page) => this.loadedPages.add(page));
 
-          // Procesar siguiente lote con delay
           setTimeout(() => {
             this.processBatches(batches, batchIndex + 1);
-          }, 500); // 500ms entre lotes
+          }, 500);
         },
-        error: (error) => {
-          console.error(`Error loading batch ${batchIndex}:`, error);
-          // Continuar con el siguiente lote aunque falle uno
+        error: () => {
           setTimeout(() => {
             this.processBatches(batches, batchIndex + 1);
           }, 1000);
@@ -135,29 +256,37 @@ export class PlacesWatterService {
       });
   }
 
-  // Método adicional para obtener una página específica si es necesario
   public getFountaingWatterByPage(page: number): Observable<FuentesDeAguaDTO> {
     return this.http.get<FuentesDeAguaDTO>(`${this.baseUrl}?page=${page}`);
   }
 
-  // Método para obtener las fuentes cacheadas inmediatamente
-  public getCachedFountains(): any[] {
+  public getCachedFountains(): FuenteDTO[] {
     return this.fountainsSubject.value || [];
   }
 
-  // Método para reiniciar el cache
   public resetCache(): void {
-    this.cancelCurrentOperations(); // Cancelar operaciones primero
+    this.cancelCurrentOperations();
     this.fountainsSubject.next([]);
     this.loadedPages.clear();
     this.isLoading = false;
-    console.log('🗑️ Cache del servicio reiniciado');
+    this.isDataFromCache = false;
+    this.allPagesLoaded = false;
   }
 
-  // Método para limpiar recursos cuando no se necesiten más
+  public clearAllCache(): void {
+    this.resetCache();
+    this.clearPersistentCache();
+  }
+
+  public forceRefreshFromAPI(): Observable<FuentesDeAguaDTO> {
+    this.clearAllCache();
+    this.isDataFromCache = false;
+    this.allPagesLoaded = false;
+    return this.getFountainsProgressive();
+  }
+
   public cleanup(): void {
     this.cancelCurrentOperations();
     this.resetCache();
-    console.log('🧹 Recursos del servicio limpiados');
   }
 }
