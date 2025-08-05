@@ -549,14 +549,6 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
-  public openSettings(): void {
-    // TODO: Implementar modal de configuración
-  }
-
-  public openAbout(): void {
-    // TODO: Implementar modal de información
-  }
-
   public async reportIssue() {
     await Browser.open({
       url: 'https://sede.madrid.es/portal/site/tramites/menuitem.62876cb64654a55e2dbd7003a8a409a0/?vgnextoid=726a492c427c9410VgnVCM2000000c205a0aRCRD&vgnextchannel=7c6aa38813180210VgnVCM100000c90da8c0RCRD&vgnextfmt=default#:~:text=Por%20tel%C3%A9fono%3A%20llamando%20al%20tel%C3%A9fono,de%20la%20ciudad%20de%20Madrid).',
