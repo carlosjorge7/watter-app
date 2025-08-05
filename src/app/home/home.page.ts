@@ -511,13 +511,6 @@ export class HomePage implements OnInit, OnDestroy {
           },
         },
         {
-          text: 'Estadísticas',
-          icon: 'analytics',
-          handler: () => {
-            this.openStatistics();
-          },
-        },
-        {
           text: 'Cancelar',
           icon: 'close',
           role: 'cancel',
