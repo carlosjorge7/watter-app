@@ -57,6 +57,49 @@
         </div>
       </div>
 
+      <div class="action-buttons">
+        <ion-button
+          expand="block"
+          fill="solid"
+          shape="round"
+          color="primary"
+          size="large"
+          (click)="goGoogleMaps()"
+        >
+          <ion-icon name="map" slot="start"></ion-icon>
+          Ver en Google Maps
+        </ion-button>
+
+        <ion-button
+          expand="block"
+          [fill]="(isFavorite$ | async) ? 'solid' : 'outline'"
+          shape="round"
+          [color]="(isFavorite$ | async) ? 'danger' : 'medium'"
+          size="large"
+          (click)="toggleFavorite()"
+        >
+          <ion-icon
+            [name]="(isFavorite$ | async) ? 'heart' : 'heart-outline'"
+            slot="start"
+          ></ion-icon>
+          {{
+            (isFavorite$ | async) ? "Quitar de favoritos" : "Añadir a favoritos"
+          }}
+        </ion-button>
+
+        <ion-button
+          expand="block"
+          fill="outline"
+          shape="round"
+          color="secondary"
+          size="large"
+          (click)="shareLocation()"
+        >
+          <ion-icon name="share" slot="start"></ion-icon>
+          Compartir ubicación
+        </ion-button>
+      </div>
+
       <!-- Información de uso -->
       <div class="usage-section">
         <h3 class="section-title">
@@ -94,49 +137,24 @@
           </div>
         </div>
       </div>
+
+      <!-- Información de instalación -->
+      <div class="installation-section">
+        <h3 class="section-title">
+          <ion-icon name="calendar" color="primary"></ion-icon>
+          Fecha de instalación
+        </h3>
+
+        <div class="installation-item">
+          <ion-icon name="calendar" color="secondary"></ion-icon>
+          <div class="installation-content">
+            <label>Instalada el</label>
+            <p>{{ getInstallationDate() }}</p>
+          </div>
+        </div>
+      </div>
     </ion-card-content>
   </ion-card>
-
-  <div class="action-buttons">
-    <ion-button
-      expand="block"
-      fill="solid"
-      shape="round"
-      color="primary"
-      size="large"
-      (click)="goGoogleMaps()"
-    >
-      <ion-icon name="map" slot="start"></ion-icon>
-      Ver en Google Maps
-    </ion-button>
-
-    <ion-button
-      expand="block"
-      [fill]="(isFavorite$ | async) ? 'solid' : 'outline'"
-      shape="round"
-      [color]="(isFavorite$ | async) ? 'danger' : 'medium'"
-      size="large"
-      (click)="toggleFavorite()"
-    >
-      <ion-icon
-        [name]="(isFavorite$ | async) ? 'heart' : 'heart-outline'"
-        slot="start"
-      ></ion-icon>
-      {{ (isFavorite$ | async) ? "Quitar de favoritos" : "Añadir a favoritos" }}
-    </ion-button>
-
-    <ion-button
-      expand="block"
-      fill="outline"
-      shape="round"
-      color="secondary"
-      size="large"
-      (click)="shareLocation()"
-    >
-      <ion-icon name="share" slot="start"></ion-icon>
-      Compartir ubicación
-    </ion-button>
-  </div>
 
   <ion-card class="tips-card">
     <ion-card-header>

@@ -81,7 +81,8 @@
 // Secciones
 .location-section,
 .usage-section,
-.coordinates-section {
+.coordinates-section,
+.installation-section {
   margin-bottom: 24px;
 
   .section-title {
@@ -136,6 +137,32 @@
   border-left: 4px solid var(--ion-color-secondary);
 
   .usage-content {
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--ion-color-medium);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    p {
+      margin: 0;
+      font-weight: 500;
+      color: var(--ion-color-dark);
+    }
+  }
+}
+
+// Instalación
+.installation-item {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: var(--ion-color-light);
+  border-radius: 12px;
+  border-left: 4px solid var(--ion-color-tertiary);
+
+  .installation-content {
     label {
       display: block;
       font-size: 0.8rem;

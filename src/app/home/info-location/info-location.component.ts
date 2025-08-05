@@ -40,6 +40,7 @@ import {
   heartOutline,
   people,
   paw,
+  calendar,
 } from 'ionicons/icons';
 
 // Interfaces
@@ -48,6 +49,7 @@ interface MarkerData {
   barrio?: string;
   estado?: string | number;
   uso?: string;
+  fullData?: any; // Objeto completo de FuenteDTO que incluye FECHA_INSTALACION
 }
 
 interface FountainMarker {
@@ -109,6 +111,7 @@ export class InfoLocationComponent implements OnInit, OnDestroy {
       'heart-outline': heartOutline,
       people,
       paw,
+      calendar,
     });
   }
 
@@ -329,5 +332,45 @@ export class InfoLocationComponent implements OnInit, OnDestroy {
     };
 
     this.favoritesService.toggleFavorite(fountain);
+  }
+
+  /**
+   * Obtiene la fecha de instalación de la fuente
+   */
+  public getInstallationDate(): string {
+    // Primero intentar obtener desde fullData
+    if (this.marker.markerData?.fullData?.FECHA_INSTALACION) {
+      return this.formatInstallationDate(
+        this.marker.markerData.fullData.FECHA_INSTALACION
+      );
+    }
+
+    return 'Fecha no disponible';
+  }
+
+  /**
+   * Formatea la fecha de instalación para mostrarla de manera legible
+   */
+  private formatInstallationDate(dateString: string): string {
+    if (!dateString) return 'Fecha no disponible';
+
+    try {
+      // Intentar parsear la fecha
+      const date = new Date(dateString);
+
+      // Verificar si la fecha es válida
+      if (isNaN(date.getTime())) {
+        return dateString; // Devolver la cadena original si no se puede parsear
+      }
+
+      // Formatear la fecha a formato español
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch (error) {
+      return dateString; // Devolver la cadena original en caso de error
+    }
   }
 }

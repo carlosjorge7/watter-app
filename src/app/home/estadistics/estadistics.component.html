@@ -1,0 +1,134 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>Estadísticas de Fuentes</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="closeModal()">
+        <ion-icon name="close" size="large"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Resumen general -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Resumen General</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="6" size-md="3">
+            <div class="stat-card">
+              <div class="stat-number">{{ totalFuentes }}</div>
+              <div class="stat-label">Total de Fuentes</div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="3">
+            <div class="stat-card">
+              <div class="stat-number">{{ totalDistritos }}</div>
+              <div class="stat-label">Distritos</div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="3">
+            <div class="stat-card">
+              <div class="stat-number">{{ fuentesOperativasGlobal }}</div>
+              <div class="stat-label">Fuentes Operativas</div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="3">
+            <div class="stat-card">
+              <div class="stat-number">{{ porcentajeOperativasGlobal }}%</div>
+              <div class="stat-label">% Operativas</div>
+            </div>
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col size="6" size-md="6">
+            <div class="stat-card">
+              <div class="stat-number">{{ fuentesSoloPersonasGlobal }}</div>
+              <div class="stat-label">Solo Personas</div>
+            </div>
+          </ion-col>
+          <ion-col size="6" size-md="6">
+            <div class="stat-card">
+              <div class="stat-number">{{ fuentesMixtasGlobal }}</div>
+              <div class="stat-label">Personas y Mascotas</div>
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Tabla de estadísticas por distrito -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Estadísticas por Distrito</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="table-container">
+        <ion-grid>
+          <!-- Cabecera de la tabla -->
+          <ion-row class="table-header">
+            <ion-col size="2.5"><strong>Distrito</strong></ion-col>
+            <ion-col size="1.5"><strong>Total</strong></ion-col>
+            <ion-col size="2"><strong>Solo Personas</strong></ion-col>
+            <ion-col size="2"><strong>Personas y Mascotas</strong></ion-col>
+            <ion-col size="1.5"><strong>Operativas</strong></ion-col>
+            <ion-col size="1.5"><strong>% Oper.</strong></ion-col>
+            <ion-col size="1"><strong>Estado</strong></ion-col>
+          </ion-row>
+
+          <!-- Filas de datos -->
+          @for (estadistica of estadisticas; track estadistica.distrito) {
+          <ion-row class="table-row">
+            <ion-col size="2.5" class="distrito-name">{{
+              estadistica.distrito
+            }}</ion-col>
+            <ion-col size="1.5" class="number-cell">{{
+              estadistica.numeroFuentes
+            }}</ion-col>
+            <ion-col size="2" class="number-cell">
+              {{ estadistica.fuentesHumanos }}
+              <span class="percentage"
+                >({{ estadistica.porcentajeHumanos }}%)</span
+              >
+            </ion-col>
+            <ion-col size="2" class="number-cell">
+              {{ estadistica.fuentesMixtas }}
+              <span class="percentage"
+                >({{ estadistica.porcentajeMixtas }}%)</span
+              >
+            </ion-col>
+            <ion-col size="1.5" class="number-cell">{{
+              estadistica.fuentesOperativas
+            }}</ion-col>
+            <ion-col size="1.5" class="number-cell">
+              <ion-chip
+                [color]="getOperativeColor(estadistica.porcentajeOperativas)"
+                size="small"
+              >
+                {{ estadistica.porcentajeOperativas }}%
+              </ion-chip>
+            </ion-col>
+            <ion-col size="1" class="status-cell">
+              <ion-icon
+                [name]="getStatusIcon(estadistica.porcentajeOperativas)"
+                [color]="getOperativeColor(estadistica.porcentajeOperativas)"
+              ></ion-icon>
+            </ion-col>
+          </ion-row>
+          }
+        </ion-grid>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  @if (isLoading) {
+  <div class="loading-container">
+    <ion-spinner></ion-spinner>
+    <p>Calculando estadísticas...</p>
+  </div>
+  }
+</ion-content>

@@ -1,0 +1,246 @@
+:host {
+  display: block;
+}
+
+/* Contenedor principal */
+ion-content {
+  --background: var(--ion-color-light);
+}
+
+/* Tarjetas principales */
+ion-card {
+  margin: 16px 0;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+ion-card-header {
+  padding-bottom: 8px;
+}
+
+ion-card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--ion-color-primary);
+}
+
+/* Tarjetas de estadísticas generales */
+.stat-card {
+  text-align: center;
+  padding: 20px 12px;
+  background: white;
+  border: 2px solid var(--ion-color-primary);
+  border-radius: 16px;
+  margin: 8px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.stat-number {
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: var(--ion-color-primary);
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: var(--ion-color-dark);
+  margin-top: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Contenedor de tabla responsive */
+.table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  background: white;
+}
+
+/* Cabecera de tabla */
+.table-header {
+  background: var(--ion-color-primary);
+  color: white;
+  font-weight: 600;
+  padding: 12px 0;
+  border-radius: 8px 8px 0 0;
+}
+
+.table-header ion-col {
+  text-align: center;
+  font-size: 0.9rem;
+  padding: 8px 4px;
+}
+
+/* Filas de datos */
+.table-row {
+  border-bottom: 1px solid var(--ion-color-light);
+  transition: background-color 0.2s ease;
+}
+
+.table-row:hover {
+  background-color: var(--ion-color-light-tint);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-row ion-col {
+  padding: 12px 4px;
+  font-size: 0.9rem;
+}
+
+/* Celdas específicas */
+.distrito-name {
+  font-weight: 600;
+  color: var(--ion-color-dark);
+  text-align: left !important;
+}
+
+.number-cell {
+  text-align: center;
+  font-weight: 500;
+}
+
+.percentage {
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+  display: block;
+  margin-top: 2px;
+}
+
+.status-cell {
+  text-align: center;
+}
+
+/* Chips de estado */
+ion-chip {
+  font-size: 0.8rem;
+  font-weight: 600;
+  height: 24px;
+  min-height: 24px;
+}
+
+/* Estado de carga */
+.loading-container {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.loading-container ion-spinner {
+  margin-bottom: 16px;
+}
+
+.loading-container p {
+  color: var(--ion-color-medium);
+  font-style: italic;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .stat-number {
+    font-size: 1.8rem;
+  }
+
+  .stat-label {
+    font-size: 0.9rem;
+  }
+
+  .stat-card {
+    padding: 16px 8px;
+  }
+
+  .table-header ion-col,
+  .table-row ion-col {
+    font-size: 0.8rem;
+    padding: 8px 2px;
+  }
+
+  .distrito-name {
+    font-size: 0.85rem;
+  }
+
+  .percentage {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 576px) {
+  ion-card {
+    margin: 8px 0;
+    border-radius: 12px;
+  }
+
+  .stat-card {
+    padding: 12px 6px;
+    margin: 4px 0;
+  }
+
+  .stat-number {
+    font-size: 1.6rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    letter-spacing: 0.3px;
+  }
+
+  .table-header ion-col,
+  .table-row ion-col {
+    font-size: 0.75rem;
+    padding: 6px 1px;
+  }
+
+  .distrito-name {
+    font-size: 0.8rem;
+  }
+
+  ion-chip {
+    font-size: 0.7rem;
+    height: 20px;
+    min-height: 20px;
+  }
+
+  .percentage {
+    display: none; /* Ocultar porcentajes en pantallas muy pequeñas */
+  }
+} /* Animaciones */
+.table-row {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Colores personalizados para chips */
+ion-chip[color="success"] {
+  --background: var(--ion-color-success-tint);
+  --color: var(--ion-color-success-shade);
+}
+
+ion-chip[color="warning"] {
+  --background: var(--ion-color-warning-tint);
+  --color: var(--ion-color-warning-shade);
+}
+
+ion-chip[color="danger"] {
+  --background: var(--ion-color-danger-tint);
+  --color: var(--ion-color-danger-shade);
+}

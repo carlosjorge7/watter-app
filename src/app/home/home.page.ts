@@ -68,7 +68,10 @@ import {
   share,
   apps,
   close,
+  library,
 } from 'ionicons/icons';
+import { Browser } from '@capacitor/browser';
+import { EstadisticsComponent } from './estadistics/estadistics.component';
 
 @Component({
   selector: 'app-home',
@@ -138,6 +141,7 @@ export class HomePage implements OnInit, OnDestroy {
       share,
       apps,
       close,
+      library,
     });
   }
 
@@ -510,7 +514,7 @@ export class HomePage implements OnInit, OnDestroy {
           text: 'Estadísticas',
           icon: 'analytics',
           handler: () => {
-            this.showCacheInfo();
+            this.openStatistics();
           },
         },
         {
@@ -533,8 +537,23 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   // Métodos del menú
-  public openStatistics(): void {
-    this.showCacheInfo();
+  public async openStatistics(): Promise<void> {
+    try {
+      console.log('📊 Abriendo estadísticas...');
+
+      const modal = await this.modalCtrl.create({
+        component: EstadisticsComponent,
+        breakpoints: [0, 1],
+        initialBreakpoint: 1,
+        backdropDismiss: true,
+        showBackdrop: true,
+      });
+
+      await modal.present();
+      console.log('✅ Modal de estadísticas abierto');
+    } catch (error) {
+      console.error('❌ Error abriendo estadísticas:', error);
+    }
   }
 
   public openSettings(): void {
@@ -545,12 +564,35 @@ export class HomePage implements OnInit, OnDestroy {
     // TODO: Implementar modal de información
   }
 
-  public reportIssue(): void {
-    // TODO: Implementar funcionalidad de reporte de problemas
+  public async reportIssue() {
+    await Browser.open({
+      url: 'https://sede.madrid.es/portal/site/tramites/menuitem.62876cb64654a55e2dbd7003a8a409a0/?vgnextoid=726a492c427c9410VgnVCM2000000c205a0aRCRD&vgnextchannel=7c6aa38813180210VgnVCM100000c90da8c0RCRD&vgnextfmt=default#:~:text=Por%20tel%C3%A9fono%3A%20llamando%20al%20tel%C3%A9fono,de%20la%20ciudad%20de%20Madrid).',
+    });
   }
 
-  public shareApp(): void {
-    // TODO: Implementar funcionalidad de compartir
+  public async shareApp(): Promise<void> {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'AquaMad - Fuentes de agua en Madrid',
+          text: 'Descubre las fuentes de agua públicas de Madrid con esta app',
+          url: 'https://places-madrid-app.onrender.com',
+        });
+      } else {
+        const text =
+          'AquaMad - Fuentes de agua en Madrid: https://places-madrid-app.onrender.com';
+        await navigator.clipboard.writeText(text);
+        console.log('Enlace de la app copiado al portapapeles');
+      }
+    } catch (error) {
+      console.log('Error sharing app:', error);
+    }
+  }
+
+  public async openDataSource(): Promise<void> {
+    await Browser.open({
+      url: 'https://datos.madrid.es/portal/site/egob/menuitem.214413fe61bdd68a53318ba0a8a409a0/?vgnextoid=b07e0f7c5ff9e510VgnVCM1000008a4a900aRCRD&vgnextchannel=b07e0f7c5ff9e510VgnVCM1000008a4a900aRCRD&vgnextfmt=default',
+    });
   }
 
   // ========== MÉTODOS DE GESTIÓN DE CACHÉ ==========

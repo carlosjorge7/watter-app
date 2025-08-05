@@ -396,7 +396,13 @@ export class FountainsListComponent implements OnInit, OnDestroy {
           title: `Estado: ${fountain.ESTADO || 'No disponible'}, Zona: ${
             fountain.DISTRITO || 'No disponible'
           }, Barrio: ${fountain.BARRIO || 'No disponible'}`,
-          markerData: fountain,
+          markerData: {
+            distrito: fountain.DISTRITO,
+            barrio: fountain.BARRIO,
+            estado: fountain.ESTADO,
+            uso: fountain.USO,
+            fullData: fountain, // Pasar el objeto completo que incluye FECHA_INSTALACION
+          },
         },
       },
       breakpoints: [0, 1],
